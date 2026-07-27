@@ -1,0 +1,36 @@
+{
+  "id": "meta-llama/llama-4-scout",
+  "displayName": "Llama 4 Scout",
+  "family": "Meta (open weights)",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Minimal, direct instructions; lighter model than Maverick",
+    "reasoning_trigger": "Explicit step-by-step helps most tasks",
+    "format_adherence": "Medium — example-driven; validate structured output",
+    "verbosity_bias": "Chatty; forbid preamble",
+    "role_sensitivity": "Low",
+    "context_placement": "Very long context window, but keep instructions short and at the end restate the ask"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "Three to five rules maximum"
+    },
+    {
+      "id": "hr2",
+      "text": "Restate the core ask at the end of a long prompt"
+    },
+    {
+      "id": "hr3",
+      "text": "Say 'output only X' to suppress filler"
+    }
+  ],
+  "failure_modes": [
+    "Loses mid-prompt constraints in very long inputs",
+    "Filler phrases unless suppressed"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "anthropic/claude-fable-5",
+  "displayName": "Claude Fable 5",
+  "family": "Anthropic",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Plain, declarative instructions; over-emphatic scaffolding (ALL CAPS, 'CRITICAL:') backfires",
+    "reasoning_trigger": "Adaptive reasoning is built in; explicit triggers are rarely needed",
+    "format_adherence": "Very high — state the shape once and it holds across long outputs",
+    "verbosity_bias": "Calibrates length to the task; explicit caps still help for hard limits",
+    "role_sensitivity": "Concrete roles help; generic 'act as an expert' adds little",
+    "context_placement": "Strong long-context recall; objective up front is still best practice"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "State each constraint once, plainly — repeated emphasis causes overtriggering"
+    },
+    {
+      "id": "hr2",
+      "text": "Give the goal, not the step-by-step procedure — it plans well on its own"
+    },
+    {
+      "id": "hr3",
+      "text": "Specify defaults for ambiguous cases, or it may ask instead of guessing"
+    }
+  ],
+  "failure_modes": [
+    "Asks a clarifying question on genuinely ambiguous asks instead of guessing",
+    "May decline dual-use or sensitive tasks that lack stated context"
+  ]
+}

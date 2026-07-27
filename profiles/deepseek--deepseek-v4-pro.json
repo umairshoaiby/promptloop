@@ -1,0 +1,36 @@
+{
+  "id": "deepseek/deepseek-v4-pro",
+  "displayName": "DeepSeek V4 Pro",
+  "family": "DeepSeek",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Direct and literal; unambiguous wording matters",
+    "reasoning_trigger": "Strong reasoner — invite it explicitly on hard analytical tasks",
+    "format_adherence": "Good; concrete examples beat abstract schemas",
+    "verbosity_bias": "Long reasoning preambles — ask for the answer first",
+    "role_sensitivity": "Moderate",
+    "context_placement": "Compact prompts; objective up front"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "Say 'give the answer first, then a short justification'"
+    },
+    {
+      "id": "hr2",
+      "text": "Show one worked example for structured outputs"
+    },
+    {
+      "id": "hr3",
+      "text": "Avoid idioms; write instructions literally"
+    }
+  ],
+  "failure_modes": [
+    "Long derivations before the answer unless redirected",
+    "Literal reading of ambiguous constraints"
+  ]
+}

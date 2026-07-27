@@ -416,6 +416,57 @@ const SEED_PROFILES = [
   failure_modes:["Adds hedges and caveats when constraints are vague","Over-explains simple answers unless told to be brief"]
 },
 {
+  id:"anthropic/claude-fable-5", displayName:"Claude Fable 5", family:"Anthropic",
+  fields:{
+    instruction_style:"Plain, declarative instructions; over-emphatic scaffolding (ALL CAPS, 'CRITICAL:') backfires",
+    reasoning_trigger:"Adaptive reasoning is built in; explicit triggers are rarely needed",
+    format_adherence:"Very high — state the shape once and it holds across long outputs",
+    verbosity_bias:"Calibrates length to the task; explicit caps still help for hard limits",
+    role_sensitivity:"Concrete roles help; generic 'act as an expert' adds little",
+    context_placement:"Strong long-context recall; objective up front is still best practice"
+  },
+  house_rules:[
+    {id:"hr1",text:"State each constraint once, plainly — repeated emphasis causes overtriggering"},
+    {id:"hr2",text:"Give the goal, not the step-by-step procedure — it plans well on its own"},
+    {id:"hr3",text:"Specify defaults for ambiguous cases, or it may ask instead of guessing"}
+  ],
+  failure_modes:["Asks a clarifying question on genuinely ambiguous asks instead of guessing","May decline dual-use or sensitive tasks that lack stated context"]
+},
+{
+  id:"anthropic/claude-opus-4.8", displayName:"Claude Opus 4.8", family:"Anthropic",
+  fields:{
+    instruction_style:"Plain declarative; section tags help on long inputs",
+    reasoning_trigger:"Adaptive; no manual trigger needed",
+    format_adherence:"High",
+    verbosity_bias:"Thorough by default — set explicit length caps",
+    role_sensitivity:"Responds well to specific personas",
+    context_placement:"Instructions first, documents after"
+  },
+  house_rules:[
+    {id:"hr1",text:"Set a numeric length cap or it will be comprehensive"},
+    {id:"hr2",text:"Ask for the answer first, elaboration second"},
+    {id:"hr3",text:"Use tags to separate instructions from long pasted material"}
+  ],
+  failure_modes:["Over-delivers detail on simple asks","Adds caveats when constraints are vague"]
+},
+{
+  id:"anthropic/claude-haiku-4.5", displayName:"Claude Haiku 4.5", family:"Anthropic",
+  fields:{
+    instruction_style:"Short, explicit instructions; skip elaborate framing",
+    reasoning_trigger:"Explicit step-by-step helps on multi-step tasks",
+    format_adherence:"Good on simple shapes; give an example for complex ones",
+    verbosity_bias:"Terse",
+    role_sensitivity:"Low — task clarity beats persona",
+    context_placement:"Keep the whole prompt compact"
+  },
+  house_rules:[
+    {id:"hr1",text:"Keep the rule count low — five or fewer"},
+    {id:"hr2",text:"Show one example of the desired output shape"},
+    {id:"hr3",text:"Make subtle constraints explicit — nothing is implied"}
+  ],
+  failure_modes:["Drops subtle or implied constraints","Simplifies complex output schemas"]
+},
+{
   id:"openai/gpt-5.5", displayName:"GPT-5.5", family:"OpenAI",
   fields:{
     instruction_style:"Terse imperative works well; markdown headers give useful structure",
@@ -467,6 +518,57 @@ const SEED_PROFILES = [
   failure_modes:["Reads ambiguous constraints literally","Occasional stilted phrasing unless tone is specified"]
 },
 {
+  id:"deepseek/deepseek-v4-pro", displayName:"DeepSeek V4 Pro", family:"DeepSeek",
+  fields:{
+    instruction_style:"Direct and literal; unambiguous wording matters",
+    reasoning_trigger:"Strong reasoner — invite it explicitly on hard analytical tasks",
+    format_adherence:"Good; concrete examples beat abstract schemas",
+    verbosity_bias:"Long reasoning preambles — ask for the answer first",
+    role_sensitivity:"Moderate",
+    context_placement:"Compact prompts; objective up front"
+  },
+  house_rules:[
+    {id:"hr1",text:"Say 'give the answer first, then a short justification'"},
+    {id:"hr2",text:"Show one worked example for structured outputs"},
+    {id:"hr3",text:"Avoid idioms; write instructions literally"}
+  ],
+  failure_modes:["Long derivations before the answer unless redirected","Literal reading of ambiguous constraints"]
+},
+{
+  id:"moonshotai/kimi-k3", displayName:"Kimi K3", family:"Moonshot AI",
+  fields:{
+    instruction_style:"Structured markdown with clear headers works well",
+    reasoning_trigger:"Capable agentic reasoner; explicit triggers help on planning tasks",
+    format_adherence:"Good with named sections; pin schemas explicitly",
+    verbosity_bias:"Moderate; cap lengths for summaries",
+    role_sensitivity:"Moderate",
+    context_placement:"Strong long-context handling; reference material before the ask is fine"
+  },
+  house_rules:[
+    {id:"hr1",text:"State the output language explicitly (e.g. 'answer in English')"},
+    {id:"hr2",text:"Use markdown headers to separate instruction blocks"},
+    {id:"hr3",text:"Pin the exact section names you want in the output"}
+  ],
+  failure_modes:["May mirror the input's language mix if output language is unstated","Renames output sections unless pinned"]
+},
+{
+  id:"qwen/qwen3.7-max", displayName:"Qwen 3.7 Max", family:"Alibaba Qwen",
+  fields:{
+    instruction_style:"Explicit, numbered instructions; clean sections",
+    reasoning_trigger:"Helps on multi-step tasks",
+    format_adherence:"Good with an example; state schemas concretely",
+    verbosity_bias:"Moderate",
+    role_sensitivity:"Moderate",
+    context_placement:"Objective first; long context handled well"
+  },
+  house_rules:[
+    {id:"hr1",text:"State the output language explicitly"},
+    {id:"hr2",text:"Number the requirements"},
+    {id:"hr3",text:"Give one example record for structured outputs"}
+  ],
+  failure_modes:["Language drift when the input mixes languages","Merges similar requirements when unnumbered"]
+},
+{
   id:"meta-llama/llama-4-maverick", displayName:"Llama 4 Maverick", family:"Meta (open weights)",
   fields:{
     instruction_style:"Simple, short instructions; long rule lists get partially dropped",
@@ -482,6 +584,40 @@ const SEED_PROFILES = [
     {id:"hr3",text:"Put the output format specification last"}
   ],
   failure_modes:["Adds a friendly preamble unless forbidden","Drops constraints when there are more than about seven"]
+},
+{
+  id:"meta-llama/llama-4-scout", displayName:"Llama 4 Scout", family:"Meta (open weights)",
+  fields:{
+    instruction_style:"Minimal, direct instructions; lighter model than Maverick",
+    reasoning_trigger:"Explicit step-by-step helps most tasks",
+    format_adherence:"Medium — example-driven; validate structured output",
+    verbosity_bias:"Chatty; forbid preamble",
+    role_sensitivity:"Low",
+    context_placement:"Very long context window, but keep instructions short and at the end restate the ask"
+  },
+  house_rules:[
+    {id:"hr1",text:"Three to five rules maximum"},
+    {id:"hr2",text:"Restate the core ask at the end of a long prompt"},
+    {id:"hr3",text:"Say 'output only X' to suppress filler"}
+  ],
+  failure_modes:["Loses mid-prompt constraints in very long inputs","Filler phrases unless suppressed"]
+},
+{
+  id:"x-ai/grok-4.5", displayName:"Grok 4.5", family:"xAI",
+  fields:{
+    instruction_style:"Direct instructions; tolerates informal phrasing",
+    reasoning_trigger:"Strong reasoner; explicit trigger helps on analysis",
+    format_adherence:"Good with an explicit template",
+    verbosity_bias:"Can editorialize — pin the tone",
+    role_sensitivity:"Moderate",
+    context_placement:"Objective first"
+  },
+  house_rules:[
+    {id:"hr1",text:"Pin the tone explicitly (e.g. 'neutral, no humor, no opinions')"},
+    {id:"hr2",text:"Forbid speculation beyond the provided material"},
+    {id:"hr3",text:"Give an explicit output template"}
+  ],
+  failure_modes:["Injects opinion or humor when tone is unpinned","Speculates beyond given sources unless forbidden"]
 },
 {
   id:"mistralai/mistral-large-2512", displayName:"Mistral Large", family:"Mistral",

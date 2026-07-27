@@ -1,0 +1,36 @@
+{
+  "id": "anthropic/claude-opus-4.8",
+  "displayName": "Claude Opus 4.8",
+  "family": "Anthropic",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Plain declarative; section tags help on long inputs",
+    "reasoning_trigger": "Adaptive; no manual trigger needed",
+    "format_adherence": "High",
+    "verbosity_bias": "Thorough by default — set explicit length caps",
+    "role_sensitivity": "Responds well to specific personas",
+    "context_placement": "Instructions first, documents after"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "Set a numeric length cap or it will be comprehensive"
+    },
+    {
+      "id": "hr2",
+      "text": "Ask for the answer first, elaboration second"
+    },
+    {
+      "id": "hr3",
+      "text": "Use tags to separate instructions from long pasted material"
+    }
+  ],
+  "failure_modes": [
+    "Over-delivers detail on simple asks",
+    "Adds caveats when constraints are vague"
+  ]
+}

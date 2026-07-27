@@ -1,0 +1,36 @@
+{
+  "id": "anthropic/claude-haiku-4.5",
+  "displayName": "Claude Haiku 4.5",
+  "family": "Anthropic",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Short, explicit instructions; skip elaborate framing",
+    "reasoning_trigger": "Explicit step-by-step helps on multi-step tasks",
+    "format_adherence": "Good on simple shapes; give an example for complex ones",
+    "verbosity_bias": "Terse",
+    "role_sensitivity": "Low — task clarity beats persona",
+    "context_placement": "Keep the whole prompt compact"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "Keep the rule count low — five or fewer"
+    },
+    {
+      "id": "hr2",
+      "text": "Show one example of the desired output shape"
+    },
+    {
+      "id": "hr3",
+      "text": "Make subtle constraints explicit — nothing is implied"
+    }
+  ],
+  "failure_modes": [
+    "Drops subtle or implied constraints",
+    "Simplifies complex output schemas"
+  ]
+}

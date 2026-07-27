@@ -1,0 +1,36 @@
+{
+  "id": "x-ai/grok-4.5",
+  "displayName": "Grok 4.5",
+  "family": "xAI",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Direct instructions; tolerates informal phrasing",
+    "reasoning_trigger": "Strong reasoner; explicit trigger helps on analysis",
+    "format_adherence": "Good with an explicit template",
+    "verbosity_bias": "Can editorialize — pin the tone",
+    "role_sensitivity": "Moderate",
+    "context_placement": "Objective first"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "Pin the tone explicitly (e.g. 'neutral, no humor, no opinions')"
+    },
+    {
+      "id": "hr2",
+      "text": "Forbid speculation beyond the provided material"
+    },
+    {
+      "id": "hr3",
+      "text": "Give an explicit output template"
+    }
+  ],
+  "failure_modes": [
+    "Injects opinion or humor when tone is unpinned",
+    "Speculates beyond given sources unless forbidden"
+  ]
+}

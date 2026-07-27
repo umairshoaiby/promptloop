@@ -1,0 +1,36 @@
+{
+  "id": "qwen/qwen3.7-max",
+  "displayName": "Qwen 3.7 Max",
+  "family": "Alibaba Qwen",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Explicit, numbered instructions; clean sections",
+    "reasoning_trigger": "Helps on multi-step tasks",
+    "format_adherence": "Good with an example; state schemas concretely",
+    "verbosity_bias": "Moderate",
+    "role_sensitivity": "Moderate",
+    "context_placement": "Objective first; long context handled well"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "State the output language explicitly"
+    },
+    {
+      "id": "hr2",
+      "text": "Number the requirements"
+    },
+    {
+      "id": "hr3",
+      "text": "Give one example record for structured outputs"
+    }
+  ],
+  "failure_modes": [
+    "Language drift when the input mixes languages",
+    "Merges similar requirements when unnumbered"
+  ]
+}

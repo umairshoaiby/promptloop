@@ -4,7 +4,7 @@
 
 One HTML file. No install, no server, no build. Download it, double-click it, paste a prompt, and watch four AI stages — **Analyze → Rewrite → Critique → Revise** — iterate until your prompt scores 90+/100 for the exact model you plan to use it with.
 
-![MIT License](https://img.shields.io/badge/license-MIT-8b5cf6) ![Zero install](https://img.shields.io/badge/install-none%20%E2%80%94%20one%20HTML%20file-22d3ee) ![Works with](https://img.shields.io/badge/works%20with-Claude%20%C2%B7%20GPT%20%C2%B7%20Gemini%20%C2%B7%20DeepSeek%20%C2%B7%20Llama%20%C2%B7%20Mistral-34d399)
+![MIT License](https://img.shields.io/badge/license-MIT-8b5cf6) ![Zero install](https://img.shields.io/badge/install-none%20%E2%80%94%20one%20HTML%20file-22d3ee) ![Works with](https://img.shields.io/badge/14%20models-Claude%20%C2%B7%20GPT%20%C2%B7%20Gemini%20%C2%B7%20Kimi%20%C2%B7%20DeepSeek%20%C2%B7%20Qwen%20%C2%B7%20Llama%20%C2%B7%20Grok%20%C2%B7%20Mistral-34d399)
 
 ![PromptLoop demo — the agentic loop improving a weak prompt from 0 to 95](assets/demo.gif)
 
@@ -41,16 +41,19 @@ Everything — your API key, your votes, your learned profiles — lives in `loc
 
 ## Supported models
 
-| Model | OpenRouter id | Role |
-|---|---|---|
-| Claude Sonnet 5 | `anthropic/claude-sonnet-5` | target |
-| GPT-5.5 | `openai/gpt-5.5` | target |
-| Gemini 3.5 Flash | `google/gemini-3.5-flash` | target |
-| DeepSeek V4 Flash | `deepseek/deepseek-v4-flash` | target + default coach |
-| Llama 4 Maverick | `meta-llama/llama-4-maverick` | target |
-| Mistral Large | `mistralai/mistral-large-2512` | target |
+| Family | Models with seeded profiles |
+|---|---|
+| Anthropic | Claude Fable 5 · Claude Opus 4.8 · Claude Sonnet 5 · Claude Haiku 4.5 |
+| OpenAI | GPT-5.5 |
+| Google | Gemini 3.5 Flash |
+| DeepSeek | V4 Pro · V4 Flash (default coach) |
+| Moonshot AI | Kimi K3 |
+| Alibaba | Qwen 3.7 Max |
+| Meta | Llama 4 Maverick · Llama 4 Scout |
+| Mistral | Mistral Large |
+| xAI | Grok 4.5 |
 
-Any other OpenRouter model id works too — type it in the custom field (it just won't have a seeded profile until you teach it one).
+14 seeded profiles, and any other OpenRouter model id works too — type it in the custom field (it just won't have a seeded profile until you teach it one). Profile JSONs live in [`profiles/`](profiles/).
 
 ## FAQ
 
