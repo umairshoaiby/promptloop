@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PromptLoop — rewrite any prompt for any AI model</title>
 <meta name="description" content="An agentic loop that analyzes, rewrites, critiques and revises your prompt for a chosen AI model — and learns from your feedback. Single file, zero install.">
+<meta name="theme-color" content="#0b0f17">
 <style>
 /* ============================= THEME ============================= */
 :root{
   --bg:#0b0f17; --bg2:#0e1420; --card:#121a29; --card2:#16203263;
   --line:#1f2b40; --line2:#2a3a57;
-  --text:#e7eef6; --muted:#8fa1b6; --faint:#5b6b80;
+  --text:#e7eef6; --muted:#8fa1b6; --faint:#7286a0;
   --cyan:#22d3ee; --violet:#8b5cf6; --green:#34d399; --red:#f87171; --amber:#fbbf24;
   --grad:linear-gradient(135deg,#22d3ee,#8b5cf6);
   --radius:14px;
@@ -18,6 +19,12 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:6px}
+button{touch-action:manipulation}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  html{scroll-behavior:auto}
+}
 body{
   background:var(--bg);color:var(--text);
   font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -77,10 +84,11 @@ h2 .step{
 #promptIn:focus,#dodIn:focus,#refineIn:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.12)}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .chip{
-  border:1px solid var(--line2);border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--muted);
-  transition:.2s;
+  border:1px solid var(--line2);border-radius:999px;padding:8px 14px;font-size:12.5px;color:var(--muted);
+  transition:.2s;min-height:36px;
 }
 .chip:hover{color:var(--text);border-color:var(--violet)}
+.chip:active{background:rgba(139,92,246,.12)}
 
 /* model grid */
 .models{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:4px}
@@ -120,7 +128,9 @@ h2 .step{
   border-radius:12px;padding:12px 30px;letter-spacing:.01em;transition:.2s;
 }
 .run:hover{filter:brightness(1.12)}
+.run:active{filter:brightness(.9)}
 .run:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.copybtn:active,.okbtn:active,.nobtn:active,.ghost:active{filter:brightness(.85)}
 .samplelink{font-size:13px;color:var(--muted)}
 .samplelink:hover{color:var(--cyan)}
 
@@ -145,7 +155,7 @@ h2 .step{
   animation:spin .7s linear infinite;display:none;
 }
 .stage.active .spin{display:inline-block}
-.itertotal{margin-left:auto;font-weight:800;font-size:16px;font-family:var(--mono)}
+.itertotal{margin-left:auto;font-weight:800;font-size:16px;font-family:var(--mono);font-variant-numeric:tabular-nums}
 .itertotal small{color:var(--faint);font-weight:400;font-size:11px}
 
 .scores{margin-top:13px;display:grid;grid-template-columns:1fr 1fr;gap:7px 26px}
@@ -154,7 +164,7 @@ h2 .step{
 .srow .lab{width:118px;color:var(--muted);flex-shrink:0}
 .bar{flex:1;height:7px;background:#0a1120;border-radius:99px;overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:var(--grad);border-radius:99px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
-.srow .val{width:26px;text-align:right;font-family:var(--mono);color:var(--muted);font-size:11.5px}
+.srow .val{width:26px;text-align:right;font-family:var(--mono);color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
 .notes{margin-top:12px;font-size:13px;color:var(--muted)}
 .notes li{margin:4px 0 4px 18px}
 .flag{color:var(--amber)}
@@ -220,9 +230,15 @@ details.iterdetails summary{cursor:pointer;color:var(--faint);font-size:12px;mar
   display:inline-block;margin-top:6px;font-size:11px;font-family:var(--mono);
   border:1px solid var(--line2);border-radius:6px;padding:1px 7px;color:var(--cyan);
 }
-.thumbs{display:flex;gap:6px}
-.thumb{border:1px solid var(--line2);border-radius:8px;padding:4px 9px;font-size:13px;transition:.15s}
-.thumb:hover{border-color:var(--cyan)}
+.thumbs{display:flex;gap:8px}
+.thumb{
+  border:1px solid var(--line2);border-radius:8px;padding:8px 12px;font-size:13px;transition:.15s;
+  min-width:40px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  color:var(--muted);
+}
+.thumb:hover{border-color:var(--cyan);color:var(--text)}
+.thumb:active{filter:brightness(1.2)}
+.thumb svg{width:16px;height:16px;flex-shrink:0}
 .thumb.up.picked{border-color:var(--green);background:rgba(52,211,153,.12)}
 .thumb.down.picked{border-color:var(--red);background:rgba(248,113,113,.1)}
 
@@ -289,11 +305,11 @@ footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
 <!-- ============ STEP 1: PROMPT ============ -->
 <section class="card">
   <h2><span class="step">1</span>Your prompt</h2>
-  <textarea id="promptIn" placeholder="Paste the prompt you actually use with AI — a coding ask, an email draft, an app you want built, anything."></textarea>
+  <textarea id="promptIn" aria-label="Your prompt" placeholder="Paste the prompt you actually use with AI — a coding ask, an email draft, an app you want built, anything."></textarea>
   <label class="hint" style="display:block;margin-top:12px;margin-bottom:5px">
     <b style="color:var(--text)">Definition of done</b> — what must the output achieve for you to call it good? (optional, but it sharpens every round)
   </label>
-  <textarea id="dodIn" style="min-height:52px" placeholder="e.g. runs without edits on Python 3.12, has error handling, and I can paste it straight into my repo"></textarea>
+  <textarea id="dodIn" aria-label="Definition of done" style="min-height:52px" placeholder="e.g. runs without edits on Python 3.12, has error handling, and I can paste it straight into my repo"></textarea>
   <div class="chips">
     <span class="hint" style="align-self:center">Try an example:</span>
     <button class="chip"
@@ -320,7 +336,7 @@ footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
 <!-- ============ STEP 2: MODEL ============ -->
 <section class="card">
   <h2><span class="step">2</span>Target model <span class="hint">— who will this prompt be used with?</span></h2>
-  <select id="targetSel" class="bigselect"></select>
+  <select id="targetSel" class="bigselect" aria-label="Target model"></select>
   <div id="targetInfo" class="hint" style="margin-top:8px"></div>
   <div class="advrow">
     <span>Or type any OpenRouter model id:</span>
@@ -368,7 +384,7 @@ footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
     <button class="copybtn" id="btnCopy">Copy improved prompt</button>
     <button class="okbtn" id="btnAccept">✓ This is better</button>
     <button class="nobtn" id="btnReject">✗ Not better</button>
-    <button class="ghost" id="btnSaveLib">💾 Save to my prompts</button>
+    <button class="ghost" id="btnSaveLib"></button>
     <span class="votehint">Your verdict teaches this model's profile — the next run uses what it learned.</span>
   </div>
 
@@ -401,8 +417,8 @@ footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
 
 <!-- ============ KEY MODAL ============ -->
 <div class="modal-bg" id="keyModal">
-  <div class="modal">
-    <button class="mclose" data-close="keyModal">×</button>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="OpenRouter API key">
+    <button class="mclose" data-close="keyModal" aria-label="Close">×</button>
     <h3>Your OpenRouter API key</h3>
     <div class="sub">
       One free key unlocks every model (Claude, GPT, Gemini, DeepSeek, Llama, Mistral…).
@@ -419,8 +435,8 @@ footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
 
 <!-- ============ PROFILE INSPECTOR ============ -->
 <div class="modal-bg" id="profModal">
-  <div class="modal" style="max-width:760px">
-    <button class="mclose" data-close="profModal">×</button>
+  <div class="modal" style="max-width:760px" role="dialog" aria-modal="true" aria-label="Model profiles">
+    <button class="mclose" data-close="profModal" aria-label="Close">×</button>
     <h3>Model profiles — what PromptLoop believes, and what it learned from you</h3>
     <div class="sub">
       Seed values are honest heuristics (<span class="badge seed">seed</span>), not benchmarked facts.
@@ -438,8 +454,8 @@ footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
 
 <!-- ============ PROMPT LIBRARY ============ -->
 <div class="modal-bg" id="libModal">
-  <div class="modal" style="max-width:720px">
-    <button class="mclose" data-close="libModal">×</button>
+  <div class="modal" style="max-width:720px" role="dialog" aria-modal="true" aria-label="My prompts">
+    <button class="mclose" data-close="libModal" aria-label="Close">×</button>
     <h3>My prompts — your library, improving with every run</h3>
     <div class="sub">
       Save the prompts you use all the time. Load one, run the loop, test the real output,
@@ -449,7 +465,7 @@ footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
   </div>
 </div>
 
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 "use strict";
@@ -959,6 +975,7 @@ async function runLoop(sample){
   state.running = true; state.sample = !!sample;
   state.target = target; state.coach = $("coachSel").value || DEFAULT_COACH;
   state.maxRounds = parseInt($("roundsSel").value,10);
+  $("btnRun").textContent = "Loop running…";
   state.original = sample ? SAMPLE.original : original;
   state.dod = sample ? "" : $("dodIn").value.trim();
   state.totals = []; state.changes = []; state.best = {prompt:state.original, score:0};
@@ -977,6 +994,7 @@ async function runLoop(sample){
     if(state.totals.length>1) finishLoop();   // show partial result if we got anywhere
   }finally{
     state.running=false; $("btnRun").disabled=false;
+    $("btnRun").textContent = "Run the loop";
   }
 }
 
@@ -1167,7 +1185,7 @@ function renderLibrary(){
       <span class="csrc">${esc((it.prompt||"").slice(0,90))}…</span></div>
       <div class="thumbs">
         <button class="thumb lib-load" title="Load into the editor">Load</button>
-        <button class="thumb lib-del" title="Delete">🗑</button>
+        <button class="thumb lib-del" title="Delete this saved prompt" aria-label="Delete this saved prompt">${ICON.trash}</button>
       </div>`;
     div.querySelector(".lib-load").onclick=()=>{
       $("promptIn").value=it.prompt; $("dodIn").value=it.dod||"";
@@ -1214,6 +1232,13 @@ function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/
 
 /* ----------------------------- 8. UI ------------------------------- */
 function $(id){ return document.getElementById(id); }
+/* Inline SVG icons (Lucide-style, stroke = currentColor) — no emoji as controls */
+const ICON = {
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>',
+  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>',
+  save:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;vertical-align:-2px;margin-right:5px"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
+};
 function toast(msg){
   const t=$("toast"); t.textContent=msg; t.classList.add("show");
   clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"), 3200);
@@ -1344,8 +1369,8 @@ function renderChanges(){
     div.innerHTML=`<div class="cbody"><b>${esc(c.summary)}</b><div class="creason">${esc(c.reason)}</div>
       <span class="csrc" title="What motivated this change">${esc(c.source)}</span></div>
       <div class="thumbs">
-        <button class="thumb up" title="This change helped">👍</button>
-        <button class="thumb down" title="This change hurt">👎</button>
+        <button class="thumb up" title="This change helped" aria-label="This change helped">${ICON.up}</button>
+        <button class="thumb down" title="This change hurt" aria-label="This change hurt">${ICON.down}</button>
       </div>`;
     const up=div.querySelector(".up"), down=div.querySelector(".down");
     /* Switching sides reverses the earlier vote too, so the tally matches the UI. */
@@ -1553,6 +1578,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   $("btnDone").onclick=verdictDone;
   $("btnNotDone").onclick=()=>{ $("refineWrap").style.display="block"; $("refineIn").focus(); };
   $("btnRefine").onclick=refineNow;
+  $("btnSaveLib").innerHTML = ICON.save + "Save to my prompts";
   $("btnSaveLib").onclick=saveToLibrary;
   $("btnLibrary").onclick=()=>{ renderLibrary(); openModal("libModal"); };
 
@@ -1573,6 +1599,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   document.querySelectorAll(".mclose").forEach(b=>b.onclick=()=>closeModal(b.dataset.close));
   document.querySelectorAll(".modal-bg").forEach(m=>m.addEventListener("click",e=>{ if(e.target===m) m.classList.remove("open"); }));
+  document.addEventListener("keydown",e=>{
+    if(e.key==="Escape") document.querySelectorAll(".modal-bg.open").forEach(m=>m.classList.remove("open"));
+  });
 });
 </script>
 </body>
