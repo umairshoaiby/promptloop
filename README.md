@@ -22,7 +22,7 @@ The loop stops honestly: when the score hits 90+, when a round stops adding valu
 
 ## Get started in 60 seconds
 
-1. **Download [`PromptLoop.html`](PromptLoop.html)** (right-click → Save link as) — or clone this repo.
+1. **Download the app:** right-click **[this raw link](https://raw.githubusercontent.com/umairshoaiby/promptloop/main/PromptLoop.html)** → *Save link as* → `PromptLoop.html`. (Or use **Code → Download ZIP** above, or clone the repo.)
 2. **Double-click the file.** It opens in your browser. Click **▶ Watch a sample run** to see the loop with zero setup.
 3. **For real runs:** grab a free key at [openrouter.ai/keys](https://openrouter.ai/keys), click **API key** in the top-right, paste it. One key unlocks every model.
 
@@ -59,7 +59,7 @@ Everything — your API key, your votes, your learned profiles — lives in `loc
 
 **Is my API key safe?** It's stored only in your browser's localStorage and sent only to OpenRouter over HTTPS. This is a single static HTML file — there is no server, no analytics, no tracking. The code is right there; read it.
 
-**Does it cost money?** A full loop makes 5–10 small model calls. With the default coach that's roughly **$0.01 per run**. OpenRouter also offers free-tier models you can set as coach.
+**Does it cost money?** A full loop makes 5–10 small model calls. With the default coach that's roughly **$0.01 per run**. New OpenRouter accounts also get free credits to start with.
 
 **Why one HTML file instead of an app?** Zero friction and full auditability. Anyone can download it, open it, and read every line of what runs on their machine — which matters for a file you give an API key to.
 

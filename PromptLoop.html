@@ -653,12 +653,13 @@ function saveOverlay(modelId,ov){ localStorage.setItem(LS.overlay(modelId), JSON
 
 function vote(modelId, source, delta){
   const ov = getOverlay(modelId);
-  ov.votes[source] = (ov.votes[source]||0) + delta;
+  const prev = ov.votes[source]||0;
+  const n = prev + delta;
+  ov.votes[source] = n;
   saveOverlay(modelId,ov);
-  const n = ov.votes[source];
-  if(n === -3) toast("Learned: “"+sourceLabel(modelId,source)+"” disabled for "+shortName(modelId));
-  else if(n === 3) toast("Learned: “"+sourceLabel(modelId,source)+"” promoted to medium confidence");
-  else if(n === 6) toast("Learned: “"+sourceLabel(modelId,source)+"” promoted to HIGH confidence");
+  if(prev>-3 && n<=-3) toast("Learned: “"+sourceLabel(modelId,source)+"” disabled for "+shortName(modelId));
+  else if(prev<6 && n>=6) toast("Learned: “"+sourceLabel(modelId,source)+"” promoted to HIGH confidence");
+  else if(prev<3 && n>=3) toast("Learned: “"+sourceLabel(modelId,source)+"” promoted to medium confidence");
   renderModelGrid();
 }
 function confidenceOf(net){ return net>=6?"high":net>=3?"medium":"low"; }
@@ -937,6 +938,11 @@ function normChanges(arr){
 
 function finishLoop(){
   const finalScore = state.best.score, base = state.baseline;
+  /* If the last scored round cleared the bar, say so — even at the round cap. */
+  if(finalScore>=90 && !/quality bar/.test(state.stopReason||"")){
+    state.stopReason="Hit the quality bar ("+finalScore+"/100).";
+  }
+  ["btnAccept","btnReject"].forEach(id=>{ const b=$(id); b.disabled=false; b.style.opacity=1; });
   $("journey").style.display="block";
   drawSpark(state.totals);
   $("journeyNote").textContent = state.totals.length + " scoring passes · coach: " + shortName(state.coach) + " · target: " + shortName(state.target);
@@ -1090,10 +1096,13 @@ function renderChanges(){
         <button class="thumb down" title="This change hurt">👎</button>
       </div>`;
     const up=div.querySelector(".up"), down=div.querySelector(".down");
+    /* Switching sides reverses the earlier vote too, so the tally matches the UI. */
     up.onclick=()=>{ if(up.classList.contains("picked"))return;
-      vote(state.target, c.source, +1); up.classList.add("picked"); down.classList.remove("picked"); };
+      vote(state.target, c.source, down.classList.contains("picked") ? +2 : +1);
+      up.classList.add("picked"); down.classList.remove("picked"); };
     down.onclick=()=>{ if(down.classList.contains("picked"))return;
-      vote(state.target, c.source, -1); down.classList.add("picked"); up.classList.remove("picked"); };
+      vote(state.target, c.source, up.classList.contains("picked") ? -2 : -1);
+      down.classList.add("picked"); up.classList.remove("picked"); };
     list.appendChild(div);
   });
 }
@@ -1250,23 +1259,31 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   /* result buttons */
   $("btnCopy").onclick=async()=>{ await navigator.clipboard.writeText(state.best.prompt||""); toast("Improved prompt copied."); };
+  /* One verdict per run — both buttons lock after either is clicked. */
+  const lockVerdict=()=>{ $("btnAccept").disabled=true; $("btnReject").disabled=true;
+    $("btnAccept").style.opacity=.45; $("btnReject").style.opacity=.45; };
   $("btnAccept").onclick=()=>{
+    if($("btnAccept").disabled) return;
     const ov=getOverlay(state.target); ov.accepts=(ov.accepts||0)+1; saveOverlay(state.target,ov);
     const seen=new Set();
     state.changes.forEach(c=>{ if(!seen.has(c.source)){ seen.add(c.source); vote(state.target,c.source,+1);} });
+    lockVerdict();
     toast("Thanks — this run's rules got upvoted for "+shortName(state.target)+".");
   };
   $("btnReject").onclick=()=>{
+    if($("btnReject").disabled) return;
     const ov=getOverlay(state.target); ov.rejects=(ov.rejects||0)+1; saveOverlay(state.target,ov);
     const seen=new Set();
     state.changes.forEach(c=>{ if(!seen.has(c.source)){ seen.add(c.source); vote(state.target,c.source,-1);} });
+    lockVerdict();
     toast("Noted — this run's rules got downvoted. Rules at net −3 stop being applied.");
   };
 
   /* key modal */
   const refreshKeyDot=()=>{ $("keyDot").className = localStorage.getItem(LS.key) ? "dot-ok":"dot-no"; };
   refreshKeyDot();
-  $("btnKey").onclick=()=>{ $("keyIn").value=localStorage.getItem(LS.key)||""; openModal("keyModal"); };
+  $("btnKey").onclick=()=>{ $("keyIn").value=localStorage.getItem(LS.key)||""; openModal("keyModal"); $("keyIn").focus(); };
+  $("keyIn").addEventListener("keydown",e=>{ if(e.key==="Enter") $("btnSaveKey").click(); });
   $("btnSaveKey").onclick=()=>{
     const v=$("keyIn").value.trim();
     if(!v) return toast("Paste a key first.");
