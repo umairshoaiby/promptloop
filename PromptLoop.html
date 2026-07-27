@@ -70,11 +70,11 @@ h2 .step{
 .hint{color:var(--muted);font-size:13px}
 
 /* input */
-#promptIn{
+#promptIn,#dodIn,#refineIn{
   width:100%;min-height:130px;background:var(--bg2);border:1px solid var(--line2);
   border-radius:10px;padding:14px;resize:vertical;line-height:1.55;
 }
-#promptIn:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.12)}
+#promptIn:focus,#dodIn:focus,#refineIn:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.12)}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .chip{
   border:1px solid var(--line2);border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--muted);
@@ -101,6 +101,13 @@ h2 .step{
   padding:8px 12px;font-size:13px;font-family:var(--mono);margin-top:2px;
 }
 #customModel:focus{outline:none;border-color:var(--cyan)}
+.bigselect{
+  width:100%;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;
+  padding:11px 12px;font-size:14px;color:var(--text);
+}
+.bigselect:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.12)}
+.bigselect optgroup{background:var(--bg2);color:var(--faint);font-style:normal}
+.bigselect option{background:var(--bg2);color:var(--text);padding:6px}
 
 /* advanced */
 .advrow{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--muted)}
@@ -273,6 +280,7 @@ footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
   <div class="logo"><div class="ring"></div>PromptLoop</div>
   <div class="tagline">Paste any prompt. Pick a model. Watch an agentic loop make it better — and learn from you.</div>
   <div class="hbtns">
+    <button class="ghost" id="btnLibrary">My prompts</button>
     <button class="ghost" id="btnProfiles">Model profiles</button>
     <button class="ghost" id="btnKey"><span id="keyDot" class="dot-no"></span>API key</button>
   </div>
@@ -281,23 +289,43 @@ footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
 <!-- ============ STEP 1: PROMPT ============ -->
 <section class="card">
   <h2><span class="step">1</span>Your prompt</h2>
-  <textarea id="promptIn" placeholder="Paste the prompt you actually use with AI — an email draft ask, a code review request, a summary instruction, anything."></textarea>
+  <textarea id="promptIn" placeholder="Paste the prompt you actually use with AI — a coding ask, an email draft, an app you want built, anything."></textarea>
+  <label class="hint" style="display:block;margin-top:12px;margin-bottom:5px">
+    <b style="color:var(--text)">Definition of done</b> — what must the output achieve for you to call it good? (optional, but it sharpens every round)
+  </label>
+  <textarea id="dodIn" style="min-height:52px" placeholder="e.g. runs without edits on Python 3.12, has error handling, and I can paste it straight into my repo"></textarea>
   <div class="chips">
     <span class="hint" style="align-self:center">Try an example:</span>
-    <button class="chip" data-ex="help me write something for my boss about the project status">status email</button>
-    <button class="chip" data-ex="summarize this document for me and make it good">summarizer</button>
-    <button class="chip" data-ex="can you look at my code and tell me if there are any problems with it and also maybe suggest improvements and explain everything">code review</button>
+    <button class="chip"
+      data-ex="write me a python script that scrapes product prices from a website and saves them"
+      data-dod="Runs as-is on Python 3.12, handles request failures, saves clean CSV, no explanation text around the code">write code</button>
+    <button class="chip"
+      data-ex="build me a simple to-do desktop app"
+      data-dod="One runnable file, keyboard-friendly, data survives restarts, tells me exactly how to launch it">desktop app</button>
+    <button class="chip"
+      data-ex="can you look at my code and tell me if there are any problems with it and also maybe suggest improvements and explain everything"
+      data-dod="Only real bugs and security issues with file:line references, no style nits, no summary of what the code does">code review</button>
+    <button class="chip"
+      data-ex="fix this error in my code"
+      data-dod="Root cause named in one sentence, the corrected code, and how to verify the fix">debug error</button>
+    <button class="chip"
+      data-ex="help me write something for my boss about the project status"
+      data-dod="Under 120 words, leads with on-track or at-risk, I can send it without editing">status email</button>
+    <button class="chip"
+      data-ex="summarize this document for me and make it good"
+      data-dod="5 bullets max, keeps every number and date, no opinions added">summarizer</button>
   </div>
 </section>
 
 <!-- ============ STEP 2: MODEL ============ -->
 <section class="card">
   <h2><span class="step">2</span>Target model <span class="hint">— who will this prompt be used with?</span></h2>
-  <div class="models" id="modelGrid"></div>
+  <select id="targetSel" class="bigselect"></select>
+  <div id="targetInfo" class="hint" style="margin-top:8px"></div>
   <div class="advrow">
     <span>Or type any OpenRouter model id:</span>
   </div>
-  <input id="customModel" placeholder="e.g. x-ai/grok-4.5" spellcheck="false">
+  <input id="customModel" placeholder="e.g. x-ai/grok-4.3 (leave empty to use the dropdown above)" spellcheck="false">
   <div class="advrow">
     <label>Coach model <select id="coachSel"></select></label>
     <label>Max rounds <select id="roundsSel">
@@ -340,7 +368,31 @@ footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
     <button class="copybtn" id="btnCopy">Copy improved prompt</button>
     <button class="okbtn" id="btnAccept">✓ This is better</button>
     <button class="nobtn" id="btnReject">✗ Not better</button>
+    <button class="ghost" id="btnSaveLib">💾 Save to my prompts</button>
     <span class="votehint">Your verdict teaches this model's profile — the next run uses what it learned.</span>
+  </div>
+
+  <!-- outcome loop: run the prompt for real, judge against the definition of done, refine -->
+  <div id="testPanel" style="margin-top:24px;border-top:1px solid var(--line);padding-top:20px">
+    <h2>Close the loop — test the real output</h2>
+    <div class="hint" style="margin-bottom:12px">
+      Run the improved prompt on the target model. Judge the output against your definition of done.
+      If it is not done, say why — PromptLoop refines the prompt from your verdict and you test again.
+    </div>
+    <button class="copybtn" id="btnTest">▶ Run it on <span id="testModelName">the target</span></button>
+    <span class="hint" id="testStatus" style="margin-left:10px;display:none"></span>
+    <div id="testWrap" style="display:none">
+      <div class="final" id="testOut" style="margin-top:14px;max-height:340px;overflow:auto"></div>
+      <div id="dodRecap" class="hint" style="margin-top:9px"></div>
+      <div class="resbtns">
+        <button class="okbtn" id="btnDone">✓ Done — this meets my bar</button>
+        <button class="nobtn" id="btnNotDone">✗ Not done — refine it</button>
+      </div>
+      <div id="refineWrap" style="display:none;margin-top:12px">
+        <textarea id="refineIn" style="min-height:60px" placeholder="What is wrong with the output? One sentence is enough — e.g. 'too long', 'skipped error handling', 'wrong tone'."></textarea>
+        <div class="resbtns"><button class="copybtn" id="btnRefine">Refine the prompt from this verdict</button></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -381,6 +433,19 @@ footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
       <button class="copybtn" id="btnExport">Export this profile (JSON)</button>
       <button class="ghost" id="btnResetLearn">Reset learning for this model</button>
     </div>
+  </div>
+</div>
+
+<!-- ============ PROMPT LIBRARY ============ -->
+<div class="modal-bg" id="libModal">
+  <div class="modal" style="max-width:720px">
+    <button class="mclose" data-close="libModal">×</button>
+    <h3>My prompts — your library, improving with every run</h3>
+    <div class="sub">
+      Save the prompts you use all the time. Load one, run the loop, test the real output,
+      give a verdict — the saved version keeps getting better. Stored in this browser.
+    </div>
+    <div id="libBody"></div>
   </div>
 </div>
 
@@ -764,6 +829,28 @@ async function coachJSON(coachModel, system, user){
   if(!obj) throw new Error("The coach model did not return valid JSON after a retry. Try a different coach model.");
   return obj;
 }
+/* Plain run: send the user's prompt to a model as-is, return its text output. */
+async function callModel(model, content){
+  const key = localStorage.getItem(LS.key);
+  if(!key) throw new Error("NO_KEY");
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions",{
+    method:"POST",
+    headers:{
+      "Authorization":"Bearer "+key,
+      "Content-Type":"application/json",
+      "HTTP-Referer":"https://github.com/umairshoaiby/promptloop",
+      "X-Title":"PromptLoop"
+    },
+    body: JSON.stringify({model, messages:[{role:"user",content}]})
+  });
+  if(!res.ok){
+    let msg = "OpenRouter error "+res.status;
+    try{ const j = await res.json(); if(j.error && j.error.message) msg += ": "+j.error.message; }catch(e){}
+    throw new Error(msg);
+  }
+  const data = await res.json();
+  return data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : "";
+}
 
 /* -------------------------- 4. SCORING ----------------------------- */
 /* The coach scores each ingredient 0–5; the TOTAL is computed here,
@@ -792,7 +879,10 @@ Also flag these anti-patterns (present true/false):
 vague_opening, buried_objective, missing_output_format, mixed_objectives, aggressive_stacking, vague_success_criteria.
 Score harshly. Quote evidence from the prompt (or note the absence).`;
 
-function analyzerPrompt(original){
+function dodBlock(dod){
+  return dod ? "\n\nThe user's definition of done — what the eventual OUTPUT must achieve. Judge the constraints and success criteria of the prompt against this:\n"+dod : "";
+}
+function analyzerPrompt(original, dod){
   return {
     system:`You are a strict prompt-quality analyst. ${RUBRIC_SPEC}
 Return ONLY JSON:
@@ -801,22 +891,22 @@ Return ONLY JSON:
  "scores":[{"ingredient":"role","score":0,"evidence":"...","suggestion":"..."} , ... all six],
  "anti_patterns":[{"pattern":"vague_opening","present":true,"span":"..."} , ... all six],
  "summary":"one plain-English sentence on the biggest weakness"}`,
-    user:"Prompt to analyze:\n\n"+original
+    user:"Prompt to analyze:\n\n"+original+dodBlock(dod)
   };
 }
-function rewriterPrompt(original, analysis, targetId){
+function rewriterPrompt(original, analysis, targetId, dod){
   return {
-    system:`You are an expert prompt engineer. Rewrite the user's prompt so it performs best on the target model, using the behavior profile below. Preserve the user's intent, domain vocabulary and voice — do not add requirements they never asked for. Fix the weaknesses found in the analysis. Every change must be justified by a rubric ingredient or a profile house rule.
+    system:`You are an expert prompt engineer. Rewrite the user's prompt so it performs best on the target model, using the behavior profile below. Preserve the user's intent, domain vocabulary and voice — do not add requirements they never asked for. Fix the weaknesses found in the analysis. If a definition of done is given, bake its criteria into the prompt as explicit constraints and output requirements. Every change must be justified by a rubric ingredient or a profile house rule.
 ${profileForPrompt(targetId)}
 Return ONLY JSON:
 {"rewritten_prompt":"...",
  "changes":[{"summary":"what changed, short","reason":"why, plain English","source":"ingredient:objective | ingredient:output_format | rule:hr1 | field:verbosity_bias ..."}]}`,
-    user:"Original prompt:\n\n"+original+"\n\nAnalysis of its weaknesses:\n"+JSON.stringify(analysis)
+    user:"Original prompt:\n\n"+original+dodBlock(dod)+"\n\nAnalysis of its weaknesses:\n"+JSON.stringify(analysis)
   };
 }
-function criticPrompt(current, targetId){
+function criticPrompt(current, targetId, dod){
   return {
-    system:`You are an adversarial prompt critic. Assume the target model will misread this prompt wherever possible — find how. ${RUBRIC_SPEC}
+    system:`You are an adversarial prompt critic. Assume the target model will misread this prompt wherever possible — find how. If a definition of done is given, also ask: could the model follow this prompt perfectly and still miss the user's definition of done? ${RUBRIC_SPEC}
 Target model context:
 ${profileForPrompt(targetId)}
 Return ONLY JSON:
@@ -825,17 +915,28 @@ Return ONLY JSON:
  "anti_patterns":[... all six],
  "issues":[{"issue":"specific way the target model could misread or underperform","fix_hint":"..."}],
  "summary":"one sentence: the biggest remaining weakness, or 'solid' if none"}`,
-    user:"Prompt to critique:\n\n"+current
+    user:"Prompt to critique:\n\n"+current+dodBlock(dod)
   };
 }
-function reviserPrompt(current, critique, targetId){
+function reviserPrompt(current, critique, targetId, dod){
   return {
     system:`You are an expert prompt engineer revising a prompt. Apply the critic's issues below with the smallest edits that fix them. Preserve intent, vocabulary and everything already working. Every change must trace to a critic issue, rubric ingredient, or profile house rule.
 ${profileForPrompt(targetId)}
 Return ONLY JSON:
 {"rewritten_prompt":"...",
  "changes":[{"summary":"...","reason":"...","source":"ingredient:... | rule:... | field:..."}]}`,
-    user:"Current prompt:\n\n"+current+"\n\nCritique to address:\n"+JSON.stringify(critique)
+    user:"Current prompt:\n\n"+current+dodBlock(dod)+"\n\nCritique to address:\n"+JSON.stringify(critique)
+  };
+}
+/* After a real test run: fix the prompt from the OUTPUT it produced. */
+function refineFromOutputPrompt(current, output, complaint, targetId, dod){
+  return {
+    system:`You are an expert prompt engineer. The prompt below was actually run on the target model and produced the output below. The user judged the output NOT done. Revise the prompt with the smallest changes that would make the next output satisfy the user — address the user's complaint directly, and add or tighten only the constraints the failure reveals. Preserve intent and vocabulary.
+${profileForPrompt(targetId)}
+Return ONLY JSON:
+{"rewritten_prompt":"...",
+ "changes":[{"summary":"...","reason":"...","source":"output-feedback | ingredient:... | rule:..."}]}`,
+    user:"Prompt:\n\n"+current+dodBlock(dod)+"\n\nOutput it produced on "+targetId+":\n\n"+output+"\n\nWhat the user says is wrong with the output:\n"+(complaint||"The user only said it does not meet the definition of done.")
   };
 }
 
@@ -859,8 +960,9 @@ async function runLoop(sample){
   state.target = target; state.coach = $("coachSel").value || DEFAULT_COACH;
   state.maxRounds = parseInt($("roundsSel").value,10);
   state.original = sample ? SAMPLE.original : original;
+  state.dod = sample ? "" : $("dodIn").value.trim();
   state.totals = []; state.changes = []; state.best = {prompt:state.original, score:0};
-  state.stopReason = "";
+  state.stopReason = ""; state.libId = null;
   $("btnRun").disabled = true; showStatus("");
   $("loopArea").style.display = "block"; $("loopArea").innerHTML = "";
   $("journey").style.display = "none"; $("resultArea").style.display = "none";
@@ -879,10 +981,11 @@ async function runLoop(sample){
 }
 
 async function runReal(){
+  const dod = state.dod;
   /* Round 0 — analyze the original */
   let card = iterCard(0, "Baseline", ["Analyze"]);
   card.setStage(0,"active");
-  const ap = analyzerPrompt(state.original);
+  const ap = analyzerPrompt(state.original, dod);
   const analysis = await coachJSON(state.coach, ap.system, ap.user);
   const s0 = computeTotal(analysis.scores, analysis.anti_patterns, analysis.complexity);
   state.baseline = s0; state.totals.push(s0);
@@ -893,14 +996,15 @@ async function runReal(){
   let current = state.original;
   card = iterCard(1, "Round 1", ["Rewrite","Critique"]);
   card.setStage(0,"active");
-  const rp = rewriterPrompt(current, analysis, state.target);
+  const rp = rewriterPrompt(current, analysis, state.target, dod);
   const rew = await coachJSON(state.coach, rp.system, rp.user);
   if(!rew.rewritten_prompt) throw new Error("The coach returned no rewritten prompt.");
   current = rew.rewritten_prompt;
   state.changes.push(...normChanges(rew.changes));
   card.setStage(0,"done"); card.showPrompt(current);
   card.setStage(1,"active");
-  let cq = await coachJSON(state.coach, criticPrompt(current,state.target).system, criticPrompt(current,state.target).user);
+  const cp1 = criticPrompt(current, state.target, dod);
+  let cq = await coachJSON(state.coach, cp1.system, cp1.user);
   let score = computeTotal(cq.scores, cq.anti_patterns, cq.complexity);
   state.totals.push(score);
   card.setStage(1,"done"); card.showScores(cq, score); card.note(cq.summary||"");
@@ -915,12 +1019,12 @@ async function runReal(){
 
     card = iterCard(round, "Round "+round, ["Revise","Critique"]);
     card.setStage(0,"active");
-    const rv = reviserPrompt(current, cq, state.target);
+    const rv = reviserPrompt(current, cq, state.target, dod);
     const revd = await coachJSON(state.coach, rv.system, rv.user);
     if(revd.rewritten_prompt){ current = revd.rewritten_prompt; state.changes.push(...normChanges(revd.changes)); }
     card.setStage(0,"done"); card.showPrompt(current);
     card.setStage(1,"active");
-    const cp = criticPrompt(current,state.target);
+    const cp = criticPrompt(current, state.target, dod);
     cq = await coachJSON(state.coach, cp.system, cp.user);
     score = computeTotal(cq.scores, cq.anti_patterns, cq.complexity);
     state.totals.push(score);
@@ -952,7 +1056,133 @@ function finishLoop(){
   $("finalPrompt").textContent = state.best.prompt;
   $("diffView").innerHTML = wordDiff(state.original, state.best.prompt);
   renderChanges();
+  resetTestPanel();
   $("resultArea").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+/* --------------------- 6b. OUTCOME LOOP (test → verdict → refine) --------------------- */
+function resetTestPanel(){
+  $("testModelName").textContent = shortName(state.target);
+  $("testWrap").style.display="none"; $("refineWrap").style.display="none";
+  $("testOut").textContent=""; $("refineIn").value="";
+  $("testStatus").style.display="none";
+  $("btnTest").disabled=false;
+  ["btnDone","btnNotDone"].forEach(id=>{ const b=$(id); b.disabled=false; b.style.opacity=1; });
+}
+function testStatus(msg){ const s=$("testStatus"); s.textContent=msg; s.style.display=msg?"inline":"none"; }
+
+async function runTest(){
+  if(!state.best.prompt) return;
+  $("btnTest").disabled=true; testStatus("Running on "+shortName(state.target)+"…");
+  try{
+    const out = await callModel(state.target, state.best.prompt);
+    state.lastOutput = out;
+    $("testOut").textContent = out || "(the model returned an empty response)";
+    $("dodRecap").textContent = state.dod ? "Your definition of done: "+state.dod : "Tip: fill in a definition of done before the next run — verdicts get sharper.";
+    $("testWrap").style.display="block"; $("refineWrap").style.display="none";
+    ["btnDone","btnNotDone"].forEach(id=>{ const b=$(id); b.disabled=false; b.style.opacity=1; });
+    testStatus("");
+    $("testWrap").scrollIntoView({behavior:"smooth",block:"nearest"});
+  }catch(err){
+    testStatus("");
+    if(String(err.message)==="NO_KEY"){ openModal("keyModal"); toast("Add your OpenRouter key to run a real test."); }
+    else toast("Test run failed: "+err.message);
+  }finally{
+    $("btnTest").disabled=false;
+  }
+}
+
+function verdictDone(){
+  const seen=new Set();
+  state.changes.forEach(c=>{ if(!seen.has(c.source)){ seen.add(c.source); vote(state.target,c.source,+1);} });
+  const ov=getOverlay(state.target); ov.accepts=(ov.accepts||0)+1; saveOverlay(state.target,ov);
+  ["btnDone","btnNotDone"].forEach(id=>{ const b=$(id); b.disabled=true; b.style.opacity=.45; });
+  if(state.libId) updateLibraryEntry(state.libId, {prompt:state.best.prompt, dod:state.dod, target:state.target, score:state.best.score, proven:true});
+  toast(state.libId ? "Proven and updated in your prompts." : "Marked done — save it to your prompts to reuse it anytime.");
+}
+
+async function refineNow(){
+  const complaint = $("refineIn").value.trim();
+  $("btnRefine").disabled=true; testStatus("Refining the prompt from your verdict…");
+  try{
+    const rp = refineFromOutputPrompt(state.best.prompt, state.lastOutput||"", complaint, state.target, state.dod);
+    const revd = await coachJSON(state.coach, rp.system, rp.user);
+    if(!revd.rewritten_prompt) throw new Error("The coach returned no revision.");
+    state.best = {prompt: revd.rewritten_prompt, score: state.best.score};
+    const newChanges = normChanges(revd.changes);
+    state.changes.push(...newChanges);
+    /* re-score the refined prompt so the journey stays honest */
+    const cp = criticPrompt(state.best.prompt, state.target, state.dod);
+    try{
+      const cq = await coachJSON(state.coach, cp.system, cp.user);
+      state.best.score = computeTotal(cq.scores, cq.anti_patterns, cq.complexity);
+      state.totals.push(state.best.score);
+      drawSpark(state.totals);
+    }catch(e){ /* score refresh is best-effort */ }
+    $("deltaTxt").textContent = "Your prompt: " + state.baseline + " → " + state.best.score;
+    $("stopReason").textContent = "Refined from your test verdict.";
+    $("finalPrompt").textContent = state.best.prompt;
+    $("diffView").innerHTML = wordDiff(state.original, state.best.prompt);
+    renderChanges();
+    $("testWrap").style.display="none"; $("refineIn").value="";
+    testStatus("");
+    toast("Prompt refined from the real output — run the test again.");
+    $("btnTest").scrollIntoView({behavior:"smooth",block:"nearest"});
+  }catch(err){
+    testStatus("");
+    toast("Refine failed: "+err.message);
+  }finally{
+    $("btnRefine").disabled=false;
+  }
+}
+
+/* --------------------- 6c. PROMPT LIBRARY --------------------- */
+const LIB_KEY="promptloop.library";
+function loadLibrary(){ try{ return JSON.parse(localStorage.getItem(LIB_KEY))||[]; }catch(e){ return []; } }
+function saveLibrary(items){ localStorage.setItem(LIB_KEY, JSON.stringify(items)); }
+function updateLibraryEntry(id, patch){
+  const items=loadLibrary(); const i=items.findIndex(x=>x.id===id);
+  if(i>=0){ items[i]={...items[i],...patch,runs:(items[i].runs||0)+1,updatedAt:new Date().toISOString().slice(0,10)}; saveLibrary(items); }
+}
+function saveToLibrary(){
+  if(!state.best.prompt) return;
+  const name = window.prompt("Name this prompt (how you will recognize it later):",
+    state.original.slice(0,40)+(state.original.length>40?"…":""));
+  if(!name) return;
+  const items=loadLibrary();
+  const id="p"+Date.now().toString(36);
+  items.unshift({id, name, prompt:state.best.prompt, dod:state.dod, target:state.target,
+    score:state.best.score, runs:1, proven:false, updatedAt:new Date().toISOString().slice(0,10)});
+  saveLibrary(items); state.libId=id;
+  toast("Saved. Open “My prompts” anytime to reuse or keep improving it.");
+}
+function renderLibrary(){
+  const items=loadLibrary(); const box=$("libBody");
+  if(!items.length){ box.innerHTML="<div class='hint'>Nothing saved yet. Improve a prompt, then click “💾 Save to my prompts”. Your regular prompts live here and keep getting better every time you run and judge them.</div>"; return; }
+  box.innerHTML="";
+  items.forEach(it=>{
+    const div=document.createElement("div"); div.className="change";
+    div.innerHTML=`<div class="cbody"><b>${esc(it.name)}</b>
+      <div class="creason">${esc(shortName(it.target))} · score ${it.score} · ${it.runs||1} run${(it.runs||1)>1?"s":""} · ${it.proven?"✓ proven on real output":"not yet proven"} · ${esc(it.updatedAt||"")}</div>
+      <span class="csrc">${esc((it.prompt||"").slice(0,90))}…</span></div>
+      <div class="thumbs">
+        <button class="thumb lib-load" title="Load into the editor">Load</button>
+        <button class="thumb lib-del" title="Delete">🗑</button>
+      </div>`;
+    div.querySelector(".lib-load").onclick=()=>{
+      $("promptIn").value=it.prompt; $("dodIn").value=it.dod||"";
+      if(SEED_PROFILES.find(p=>p.id===it.target)){ $("targetSel").value=it.target; $("customModel").value=""; }
+      else $("customModel").value=it.target;
+      updateTargetInfo(); state.libId=it.id;
+      closeModal("libModal");
+      $("promptIn").scrollIntoView({behavior:"smooth",block:"center"});
+      toast("Loaded “"+it.name+"” — run the loop to keep improving it.");
+    };
+    div.querySelector(".lib-del").onclick=()=>{
+      saveLibrary(loadLibrary().filter(x=>x.id!==it.id)); renderLibrary();
+    };
+    box.appendChild(div);
+  });
 }
 
 /* -------------------------- 7. WORD DIFF --------------------------- */
@@ -995,24 +1225,46 @@ function showStatus(msg, isErr){
 function openModal(id){ $(id).classList.add("open"); }
 function closeModal(id){ $(id).classList.remove("open"); }
 
-/* model grid */
-let currentModel = SEED_PROFILES[0].id;
+/* target model dropdown (grouped by family) */
 function selectedModel(){
   const custom = $("customModel").value.trim();
-  return custom || currentModel;
+  return custom || $("targetSel").value;
 }
-function renderModelGrid(){
-  const g=$("modelGrid"); g.innerHTML="";
-  for(const p of SEED_PROFILES){
-    const ov=getOverlay(p.id);
-    const learned=Object.values(ov.votes||{}).filter(v=>v>=3||v<=-3).length;
-    const b=document.createElement("button");
-    b.className="model"+(p.id===currentModel && !$("customModel").value.trim() ? " sel":"");
-    b.innerHTML = "<b>"+p.displayName+"</b><span>"+p.id+"</span>" +
-      (learned? "<span class='learn'>"+learned+" learned</span>" : "");
-    b.onclick=()=>{ currentModel=p.id; $("customModel").value=""; renderModelGrid(); };
-    g.appendChild(b);
+function learnedCount(modelId){
+  const ov=getOverlay(modelId);
+  return Object.values(ov.votes||{}).filter(v=>v>=3||v<=-3).length;
+}
+function renderModelGrid(){   // (re)build the dropdown, preserving the selection
+  const sel=$("targetSel");
+  const keep = sel.value || SEED_PROFILES[0].id;
+  sel.innerHTML="";
+  const fams=[...new Set(SEED_PROFILES.map(p=>p.family))];
+  for(const fam of fams){
+    const og=document.createElement("optgroup"); og.label=fam;
+    for(const p of SEED_PROFILES.filter(x=>x.family===fam)){
+      const n=learnedCount(p.id);
+      const o=document.createElement("option");
+      o.value=p.id;
+      o.textContent=p.displayName+"   ·   "+p.id+(n?("   ·   "+n+" learned"):"");
+      og.appendChild(o);
+    }
+    sel.appendChild(og);
   }
+  sel.value=keep;
+  updateTargetInfo();
+}
+function updateTargetInfo(){
+  const custom=$("customModel").value.trim();
+  const info=$("targetInfo");
+  if(custom){
+    info.textContent="Custom model: "+custom+" — no seeded profile yet; the loop uses general best practice and learns as you vote.";
+    return;
+  }
+  const id=$("targetSel").value;
+  const n=learnedCount(id);
+  const ov=getOverlay(id);
+  info.textContent = shortName(id)+" · "+(n? n+" rule"+(n>1?"s":"")+" learned from your feedback":"seed profile — teach it with 👍/👎 after a run")
+    + ((ov.accepts||ov.rejects)? " · "+(ov.accepts||0)+" runs accepted":"");
 }
 
 /* iteration cards */
@@ -1244,8 +1496,13 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const cs=$("coachSel");
   SEED_PROFILES.forEach(p=>{ const o=document.createElement("option"); o.value=p.id; o.textContent=p.displayName; if(p.id===DEFAULT_COACH)o.selected=true; cs.appendChild(o); });
 
-  $("customModel").addEventListener("input", renderModelGrid);
-  document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ $("promptIn").value=c.dataset.ex; $("promptIn").focus(); });
+  $("customModel").addEventListener("input", updateTargetInfo);
+  $("targetSel").addEventListener("change", updateTargetInfo);
+  document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+    $("promptIn").value=c.dataset.ex;
+    $("dodIn").value=c.dataset.dod||"";
+    $("promptIn").focus();
+  });
 
   $("btnRun").onclick=()=>runLoop(false);
   $("btnSample").onclick=()=>runLoop(true);
@@ -1290,6 +1547,14 @@ document.addEventListener("DOMContentLoaded", ()=>{
     localStorage.setItem(LS.key,v); refreshKeyDot(); closeModal("keyModal"); toast("Key saved in this browser only.");
   };
   $("btnClearKey").onclick=()=>{ localStorage.removeItem(LS.key); $("keyIn").value=""; refreshKeyDot(); toast("Key removed."); };
+
+  /* outcome loop + library */
+  $("btnTest").onclick=runTest;
+  $("btnDone").onclick=verdictDone;
+  $("btnNotDone").onclick=()=>{ $("refineWrap").style.display="block"; $("refineIn").focus(); };
+  $("btnRefine").onclick=refineNow;
+  $("btnSaveLib").onclick=saveToLibrary;
+  $("btnLibrary").onclick=()=>{ renderLibrary(); openModal("libModal"); };
 
   /* profiles modal */
   $("btnProfiles").onclick=()=>{ renderInspector(); openModal("profModal"); };

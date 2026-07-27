@@ -11,8 +11,10 @@ One HTML file. No install, no server, no build. Download it, double-click it, pa
 ## What it does
 
 - **Scores your prompt like an engineer, not a vibe.** Six ingredients — role, objective, context, constraints, output format, reasoning trigger — each rated 0–5 with evidence, plus six anti-pattern checks. The total is computed deterministically in code, so the AI can't grade its own homework.
+- **Starts from your definition of done.** Before the loop runs, you say what a good output must achieve ("runs without edits", "under 120 words", "only real bugs with file:line refs"). Every stage judges against *your* bar, not a generic one.
 - **Rewrites for the model you'll actually use.** A prompt tuned for Claude is not optimal for Llama. PromptLoop applies a per-model behavior profile (instruction style, format habits, known failure modes, house rules) and every single change is annotated with *why* it was made.
-- **Improves itself every time you use it.** Give any change a 👍 or 👎. Votes promote profile rules to "learned" or disable them entirely — so the next run genuinely behaves differently. All learning stays in your browser.
+- **Closes the loop on the real output.** One click runs the improved prompt on the target model. You judge the actual output: *Done* or *Not done — here's what's wrong*. A "not done" verdict refines the prompt from the real failure, and you test again. Prompt → output → verdict → better prompt.
+- **Improves itself every time you use it.** Verdicts and 👍/👎 votes promote profile rules to "learned" or disable them entirely — so the next run genuinely behaves differently. Your regular prompts live in **My prompts** and keep getting better across sessions. All of it stays in your browser.
 
 ## How it works
 
@@ -22,11 +24,25 @@ The loop stops honestly: when the score hits 90+, when a round stops adding valu
 
 ## Get started in 60 seconds
 
-1. **Download the app:** right-click **[this raw link](https://raw.githubusercontent.com/umairshoaiby/promptloop/main/PromptLoop.html)** → *Save link as* → `PromptLoop.html`. (Or use **Code → Download ZIP** above, or clone the repo.)
-2. **Double-click the file.** It opens in your browser. Click **▶ Watch a sample run** to see the loop with zero setup.
+1. **Download the app** — either way works:
+   - Right-click **[this raw link](https://raw.githubusercontent.com/umairshoaiby/promptloop/main/PromptLoop.html)** → *Save link as* → `PromptLoop.html`, **or**
+   - Click the green **Code** button above → **Download ZIP** → extract it anywhere → open the folder.
+2. **Double-click `PromptLoop.html`.** It opens in your browser like any web page — nothing installs. Click **▶ Watch a sample run** to see the loop with zero setup.
 3. **For real runs:** grab a free key at [openrouter.ai/keys](https://openrouter.ai/keys), click **API key** in the top-right, paste it. One key unlocks every model.
 
-Then paste any prompt you actually use, pick your target model, and hit **Run the loop**.
+Then paste any prompt you actually use, write your definition of done, pick your target model from the dropdown, and hit **Run the loop**.
+
+## Make it part of your day
+
+PromptLoop is built for the prompts you use *repeatedly* — the code request, the status email, the review ask you type every week. The workflow:
+
+1. **Keep `PromptLoop.html` on your desktop** (or bookmark it). It opens instantly, works offline except for the model calls.
+2. **Bring a regular prompt** and write its definition of done — what must be true of the output for you to call it finished.
+3. **Run the loop** — get the improved, model-targeted version.
+4. **Close the loop:** click **▶ Run it on [your model]** and judge the real output. *Done* proves the prompt. *Not done* + one sentence about what's wrong refines it from the actual failure — then test again.
+5. **Save it to My prompts.** Next week, load it, run it, judge it. The saved version and the model's profile both keep improving from every verdict.
+
+After a few cycles you have a personal library of proven prompts, each tuned to the model you use and refined against real outputs — not guesses.
 
 ## How the learning works (honestly)
 
@@ -68,7 +84,7 @@ Everything — your API key, your votes, your learned profiles — lives in `loc
 ## Roadmap
 
 - Community profile merging (import a shared profile pack)
-- Side-by-side "prove it" runs — original vs. improved on the target model
+- Side-by-side compare — original vs. improved output in one view
 - Packaged desktop build for offline-first teams
 - More seeded models as their behavior stabilizes
 
