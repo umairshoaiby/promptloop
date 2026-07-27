@@ -1,0 +1,36 @@
+{
+  "id": "meta-llama/llama-4-maverick",
+  "displayName": "Llama 4 Maverick",
+  "family": "Meta (open weights)",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Simple, short instructions; long rule lists get partially dropped",
+    "reasoning_trigger": "Explicit chain-of-thought helps on most non-trivial tasks",
+    "format_adherence": "Medium — give an example record and expect to validate output",
+    "verbosity_bias": "Chatty; forbid preamble explicitly",
+    "role_sensitivity": "Persona helps tone more than accuracy",
+    "context_placement": "Keep the total prompt short; the end of the prompt gets the most attention"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "Cap the rules to the essential five"
+    },
+    {
+      "id": "hr2",
+      "text": "Say 'no preamble — output only the X' when you want clean output"
+    },
+    {
+      "id": "hr3",
+      "text": "Put the output format specification last"
+    }
+  ],
+  "failure_modes": [
+    "Adds a friendly preamble unless forbidden",
+    "Drops constraints when there are more than about seven"
+  ]
+}

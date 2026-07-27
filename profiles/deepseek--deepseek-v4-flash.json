@@ -1,0 +1,36 @@
+{
+  "id": "deepseek/deepseek-v4-flash",
+  "displayName": "DeepSeek V4 Flash",
+  "family": "DeepSeek",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Direct and literal; keep instructions unambiguous",
+    "reasoning_trigger": "Strong gains from explicit step-by-step on analytical tasks",
+    "format_adherence": "Follows a concrete example better than an abstract schema",
+    "verbosity_bias": "Can over-elaborate its reasoning; ask for the answer first, reasoning second",
+    "role_sensitivity": "Moderate",
+    "context_placement": "Keep prompts compact; trim context that is not needed for the task"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "Show one example of the desired output"
+    },
+    {
+      "id": "hr2",
+      "text": "State the tone explicitly (e.g. 'neutral business English')"
+    },
+    {
+      "id": "hr3",
+      "text": "Avoid idioms and figures of speech in instructions"
+    }
+  ],
+  "failure_modes": [
+    "Reads ambiguous constraints literally",
+    "Occasional stilted phrasing unless tone is specified"
+  ]
+}

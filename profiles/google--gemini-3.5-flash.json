@@ -1,0 +1,36 @@
+{
+  "id": "google/gemini-3.5-flash",
+  "displayName": "Gemini 3.5 Flash",
+  "family": "Google",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Clear headers and short paragraphs; avoid deeply nested instruction trees",
+    "reasoning_trigger": "Fast model — an explicit reasoning request improves accuracy on logic-heavy tasks",
+    "format_adherence": "Good on simple schemas; flatten complex nested JSON",
+    "verbosity_bias": "Terse by default; ask for depth explicitly when you want it",
+    "role_sensitivity": "Low to moderate; task clarity matters more than persona",
+    "context_placement": "Handles long context well; put reference material before the question"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "Mark every required section explicitly as required"
+    },
+    {
+      "id": "hr2",
+      "text": "One question per prompt — split compound asks"
+    },
+    {
+      "id": "hr3",
+      "text": "Prefer flat bullet constraints over nested rules"
+    }
+  ],
+  "failure_modes": [
+    "Skips optional sections when the ask is broad",
+    "Answers around a poorly bounded question"
+  ]
+}

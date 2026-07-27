@@ -1,0 +1,36 @@
+{
+  "id": "anthropic/claude-sonnet-5",
+  "displayName": "Claude Sonnet 5",
+  "family": "Anthropic",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Plain declarative instructions; XML-style tags (<context>, <task>) help separate long inputs",
+    "reasoning_trigger": "Adaptive reasoning is built in; explicit step-by-step helps only on multi-constraint tasks",
+    "format_adherence": "High — follows named sections and schemas closely",
+    "verbosity_bias": "Slightly verbose; cap lengths with numbers, not adjectives",
+    "role_sensitivity": "Specific personas noticeably shift tone and depth",
+    "context_placement": "Instructions first, long documents after; restate the ask after very long context"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "Separate long inputs with simple tags like <context> and <task>"
+    },
+    {
+      "id": "hr2",
+      "text": "State output length caps in numbers (e.g. 'max 5 bullets'), not adjectives"
+    },
+    {
+      "id": "hr3",
+      "text": "Put hard constraints as a short bulleted list, not buried in prose"
+    }
+  ],
+  "failure_modes": [
+    "Adds hedges and caveats when constraints are vague",
+    "Over-explains simple answers unless told to be brief"
+  ]
+}

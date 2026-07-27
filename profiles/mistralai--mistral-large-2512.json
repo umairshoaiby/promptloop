@@ -1,0 +1,32 @@
+{
+  "id": "mistralai/mistral-large-2512",
+  "displayName": "Mistral Large",
+  "family": "Mistral",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Concise imperative with clean sections",
+    "reasoning_trigger": "Helps on multi-step analysis; skip for lookups and transforms",
+    "format_adherence": "Good; keep schemas shallow",
+    "verbosity_bias": "Fairly terse",
+    "role_sensitivity": "Moderate",
+    "context_placement": "Objective first; supporting material after"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "Ask for complete sentences when you want prose, or it may answer in fragments"
+    },
+    {
+      "id": "hr2",
+      "text": "List constraints one per line so none get merged"
+    }
+  ],
+  "failure_modes": [
+    "Over-compressed bullet-fragment answers",
+    "Occasionally merges two adjacent constraints into one"
+  ]
+}

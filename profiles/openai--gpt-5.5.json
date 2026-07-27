@@ -1,0 +1,36 @@
+{
+  "id": "openai/gpt-5.5",
+  "displayName": "GPT-5.5",
+  "family": "OpenAI",
+  "profileVersion": 1,
+  "provenance": "seed-heuristic",
+  "provenanceNote": "Starting hypotheses written from public provider documentation and community experience — not benchmarked claims. PromptLoop refines these through your feedback, in your browser.",
+  "lastUpdated": "2026-07-27",
+  "confidence": "low",
+  "fields": {
+    "instruction_style": "Terse imperative works well; markdown headers give useful structure",
+    "reasoning_trigger": "Benefits from an explicit 'reason through this before answering' on multi-step tasks",
+    "format_adherence": "High with an explicit template or schema; drifts on loose prose formats",
+    "verbosity_bias": "Mirrors prompt length — short prompts get short answers",
+    "role_sensitivity": "Moderate; a concrete role beats an elaborate persona",
+    "context_placement": "Front-load the objective; recall of mid-context details degrades in long prompts"
+  },
+  "house_rules": [
+    {
+      "id": "hr1",
+      "text": "Give an explicit output template or example of the desired shape"
+    },
+    {
+      "id": "hr2",
+      "text": "Number multi-part requirements so none get merged"
+    },
+    {
+      "id": "hr3",
+      "text": "Repeat the single most critical constraint at the end of the prompt"
+    }
+  ],
+  "failure_modes": [
+    "Invents its own structure when no format is specified",
+    "Compresses below requested detail on long outputs"
+  ]
+}

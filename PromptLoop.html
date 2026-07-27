@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PromptLoop — rewrite any prompt for any AI model</title>
+<meta name="description" content="An agentic loop that analyzes, rewrites, critiques and revises your prompt for a chosen AI model — and learns from your feedback. Single file, zero install.">
+<style>
+/* ============================= THEME ============================= */
+:root{
+  --bg:#0b0f17; --bg2:#0e1420; --card:#121a29; --card2:#16203263;
+  --line:#1f2b40; --line2:#2a3a57;
+  --text:#e7eef6; --muted:#8fa1b6; --faint:#5b6b80;
+  --cyan:#22d3ee; --violet:#8b5cf6; --green:#34d399; --red:#f87171; --amber:#fbbf24;
+  --grad:linear-gradient(135deg,#22d3ee,#8b5cf6);
+  --radius:14px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  min-height:100vh;
+  background-image:
+    radial-gradient(1000px 500px at 80% -10%, rgba(139,92,246,.10), transparent 60%),
+    radial-gradient(900px 500px at 10% -10%, rgba(34,211,238,.08), transparent 60%);
+}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px 120px}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+textarea,input,select{font:inherit;color:var(--text)}
+::placeholder{color:var(--faint)}
+
+/* ============================= HEADER ============================= */
+header{
+  display:flex;align-items:center;gap:14px;padding:22px 0 8px;flex-wrap:wrap;
+}
+.logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:22px;letter-spacing:-.02em}
+.logo .ring{
+  width:30px;height:30px;border-radius:50%;
+  background:conic-gradient(from 120deg,#22d3ee,#8b5cf6,#22d3ee);
+  -webkit-mask:radial-gradient(circle at center, transparent 42%, black 45%);
+          mask:radial-gradient(circle at center, transparent 42%, black 45%);
+  animation:spin 6s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tagline{color:var(--muted);font-size:13.5px;flex:1;min-width:200px}
+.hbtns{display:flex;gap:8px}
+.ghost{
+  border:1px solid var(--line2);border-radius:10px;padding:7px 13px;font-size:13px;color:var(--muted);
+  transition:.2s;
+}
+.ghost:hover{color:var(--text);border-color:var(--cyan)}
+.dot-ok{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px}
+.dot-no{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:6px}
+
+/* ============================= CARDS ============================= */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px;margin-top:18px;
+}
+h2{font-size:15px;font-weight:700;letter-spacing:.01em;margin-bottom:12px}
+h2 .step{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:50%;background:var(--grad);color:#08101c;
+  font-size:12px;font-weight:800;margin-right:9px;vertical-align:-4px;
+}
+.hint{color:var(--muted);font-size:13px}
+
+/* input */
+#promptIn{
+  width:100%;min-height:130px;background:var(--bg2);border:1px solid var(--line2);
+  border-radius:10px;padding:14px;resize:vertical;line-height:1.55;
+}
+#promptIn:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.12)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{
+  border:1px solid var(--line2);border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--muted);
+  transition:.2s;
+}
+.chip:hover{color:var(--text);border-color:var(--violet)}
+
+/* model grid */
+.models{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:4px}
+.model{
+  border:1px solid var(--line2);border-radius:12px;padding:12px 13px;text-align:left;
+  background:var(--bg2);transition:.18s;position:relative;
+}
+.model:hover{border-color:var(--cyan)}
+.model.sel{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.14);background:#0d1826}
+.model b{display:block;font-size:13.5px}
+.model span{font-size:11.5px;color:var(--faint);font-family:var(--mono);word-break:break-all}
+.model .learn{
+  position:absolute;top:8px;right:9px;font-size:10px;padding:2px 7px;border-radius:999px;
+  background:rgba(52,211,153,.14);color:var(--green);border:1px solid rgba(52,211,153,.35);
+}
+#customModel{
+  width:100%;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;
+  padding:8px 12px;font-size:13px;font-family:var(--mono);margin-top:2px;
+}
+#customModel:focus{outline:none;border-color:var(--cyan)}
+
+/* advanced */
+.advrow{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--muted)}
+.advrow select{
+  background:var(--bg2);border:1px solid var(--line2);border-radius:8px;padding:6px 9px;font-size:13px;
+}
+.runrow{display:flex;gap:14px;align-items:center;margin-top:18px;flex-wrap:wrap}
+.run{
+  background:var(--grad);color:#07101c;font-weight:800;font-size:15px;
+  border-radius:12px;padding:12px 30px;letter-spacing:.01em;transition:.2s;
+}
+.run:hover{filter:brightness(1.12)}
+.run:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.samplelink{font-size:13px;color:var(--muted)}
+.samplelink:hover{color:var(--cyan)}
+
+/* ============================= LOOP VIEW ============================= */
+#loopArea{display:none}
+.iter{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;margin-top:14px;animation:rise .4s ease both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.iterhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.itertitle{font-weight:700;font-size:14px}
+.stagechips{display:flex;gap:7px;flex-wrap:wrap}
+.stage{
+  font-size:11.5px;padding:4px 11px;border-radius:999px;border:1px solid var(--line2);
+  color:var(--faint);transition:.3s;display:flex;align-items:center;gap:6px;
+}
+.stage.active{color:var(--cyan);border-color:var(--cyan);background:rgba(34,211,238,.08)}
+.stage.done{color:var(--green);border-color:rgba(52,211,153,.4)}
+.stage .spin{
+  width:9px;height:9px;border-radius:50%;border:2px solid var(--cyan);border-top-color:transparent;
+  animation:spin .7s linear infinite;display:none;
+}
+.stage.active .spin{display:inline-block}
+.itertotal{margin-left:auto;font-weight:800;font-size:16px;font-family:var(--mono)}
+.itertotal small{color:var(--faint);font-weight:400;font-size:11px}
+
+.scores{margin-top:13px;display:grid;grid-template-columns:1fr 1fr;gap:7px 26px}
+@media(max-width:640px){.scores{grid-template-columns:1fr}}
+.srow{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.srow .lab{width:118px;color:var(--muted);flex-shrink:0}
+.bar{flex:1;height:7px;background:#0a1120;border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--grad);border-radius:99px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.srow .val{width:26px;text-align:right;font-family:var(--mono);color:var(--muted);font-size:11.5px}
+.notes{margin-top:12px;font-size:13px;color:var(--muted)}
+.notes li{margin:4px 0 4px 18px}
+.flag{color:var(--amber)}
+.iterprompt{
+  margin-top:12px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.6;
+  white-space:pre-wrap;color:#c6d4e3;max-height:220px;overflow:auto;
+}
+details.iterdetails summary{cursor:pointer;color:var(--faint);font-size:12px;margin-top:10px;user-select:none}
+
+/* sparkline / journey */
+#journey{display:none;margin-top:16px;padding:16px 20px}
+#journey .jrow{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+#sparkline{height:56px}
+.jlabel{font-size:12.5px;color:var(--muted)}
+
+/* ============================= RESULT ============================= */
+#resultArea{display:none}
+.delta{
+  display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:4px;
+}
+.delta .big{
+  font-size:34px;font-weight:800;font-family:var(--mono);
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.delta .why{color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:6px;margin:14px 0 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{padding:8px 16px;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--text);border-color:var(--cyan)}
+.pane{display:none}
+.pane.on{display:block;animation:rise .3s ease both}
+.final{
+  background:var(--bg2);border:1px solid var(--line2);border-radius:10px;padding:16px;
+  font-family:var(--mono);font-size:13px;line-height:1.65;white-space:pre-wrap;color:#dbe7f3;
+}
+.resbtns{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.copybtn{
+  background:var(--grad);color:#07101c;font-weight:700;border-radius:10px;padding:9px 20px;font-size:13.5px;
+}
+.okbtn{border:1px solid rgba(52,211,153,.5);color:var(--green);border-radius:10px;padding:8px 16px;font-size:13px}
+.nobtn{border:1px solid rgba(248,113,113,.45);color:var(--red);border-radius:10px;padding:8px 16px;font-size:13px}
+.okbtn:hover{background:rgba(52,211,153,.1)}
+.nobtn:hover{background:rgba(248,113,113,.08)}
+.votehint{font-size:12px;color:var(--faint)}
+
+/* diff */
+.diff{
+  background:var(--bg2);border:1px solid var(--line2);border-radius:10px;padding:16px;
+  font-family:var(--mono);font-size:12.5px;line-height:1.8;white-space:pre-wrap;color:#b9c8d9;
+}
+.diff del{background:rgba(248,113,113,.16);color:#fca5a5;text-decoration:line-through;border-radius:3px;padding:0 2px}
+.diff ins{background:rgba(52,211,153,.15);color:#6ee7b7;text-decoration:none;border-radius:3px;padding:0 2px}
+
+/* changes */
+.change{
+  border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:9px;
+  display:flex;gap:12px;align-items:flex-start;background:var(--bg2);
+}
+.change .cbody{flex:1}
+.change b{font-size:13.5px}
+.change .creason{color:var(--muted);font-size:12.5px;margin-top:2px}
+.change .csrc{
+  display:inline-block;margin-top:6px;font-size:11px;font-family:var(--mono);
+  border:1px solid var(--line2);border-radius:6px;padding:1px 7px;color:var(--cyan);
+}
+.thumbs{display:flex;gap:6px}
+.thumb{border:1px solid var(--line2);border-radius:8px;padding:4px 9px;font-size:13px;transition:.15s}
+.thumb:hover{border-color:var(--cyan)}
+.thumb.up.picked{border-color:var(--green);background:rgba(52,211,153,.12)}
+.thumb.down.picked{border-color:var(--red);background:rgba(248,113,113,.1)}
+
+/* ============================= MODALS ============================= */
+.modal-bg{
+  display:none;position:fixed;inset:0;background:rgba(4,8,14,.7);backdrop-filter:blur(3px);z-index:40;
+  align-items:flex-start;justify-content:center;padding:6vh 16px;overflow:auto;
+}
+.modal-bg.open{display:flex}
+.modal{
+  background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:24px;
+  width:100%;max-width:640px;animation:rise .25s ease both;
+}
+.modal h3{font-size:16px;margin-bottom:6px}
+.modal .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+.modal input[type=password],.modal input[type=text]{
+  width:100%;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;padding:10px 13px;
+  font-family:var(--mono);font-size:13px;
+}
+.modal input:focus{outline:none;border-color:var(--cyan)}
+.mrow{display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap}
+.xbtn{position:absolute}
+.mclose{float:right;color:var(--faint);font-size:20px;line-height:1;margin:-6px -4px 0 0}
+.mclose:hover{color:var(--text)}
+
+/* profile inspector */
+.ptable{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+.ptable th{color:var(--faint);text-align:left;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+.ptable td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.badge{font-size:10.5px;border-radius:6px;padding:1px 7px;border:1px solid var(--line2);color:var(--muted)}
+.badge.seed{color:var(--amber);border-color:rgba(251,191,36,.4)}
+.badge.learned{color:var(--green);border-color:rgba(52,211,153,.4)}
+.badge.off{color:var(--red);border-color:rgba(248,113,113,.4)}
+.pselect{margin-top:4px}
+
+/* toast */
+#toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#0d1a26;border:1px solid var(--cyan);color:var(--text);
+  border-radius:12px;padding:11px 20px;font-size:13.5px;z-index:60;transition:.35s;opacity:0;
+  box-shadow:0 10px 40px rgba(0,0,0,.5);max-width:90vw;
+}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* status line */
+#status{margin-top:14px;font-size:13px;color:var(--muted);display:none}
+#status.err{color:var(--red);display:block}
+footer{margin-top:44px;color:var(--faint);font-size:12.5px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo"><div class="ring"></div>PromptLoop</div>
+  <div class="tagline">Paste any prompt. Pick a model. Watch an agentic loop make it better — and learn from you.</div>
+  <div class="hbtns">
+    <button class="ghost" id="btnProfiles">Model profiles</button>
+    <button class="ghost" id="btnKey"><span id="keyDot" class="dot-no"></span>API key</button>
+  </div>
+</header>
+
+<!-- ============ STEP 1: PROMPT ============ -->
+<section class="card">
+  <h2><span class="step">1</span>Your prompt</h2>
+  <textarea id="promptIn" placeholder="Paste the prompt you actually use with AI — an email draft ask, a code review request, a summary instruction, anything."></textarea>
+  <div class="chips">
+    <span class="hint" style="align-self:center">Try an example:</span>
+    <button class="chip" data-ex="help me write something for my boss about the project status">status email</button>
+    <button class="chip" data-ex="summarize this document for me and make it good">summarizer</button>
+    <button class="chip" data-ex="can you look at my code and tell me if there are any problems with it and also maybe suggest improvements and explain everything">code review</button>
+  </div>
+</section>
+
+<!-- ============ STEP 2: MODEL ============ -->
+<section class="card">
+  <h2><span class="step">2</span>Target model <span class="hint">— who will this prompt be used with?</span></h2>
+  <div class="models" id="modelGrid"></div>
+  <div class="advrow">
+    <span>Or type any OpenRouter model id:</span>
+  </div>
+  <input id="customModel" placeholder="e.g. x-ai/grok-4.5" spellcheck="false">
+  <div class="advrow">
+    <label>Coach model <select id="coachSel"></select></label>
+    <label>Max rounds <select id="roundsSel">
+      <option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option>
+    </select></label>
+    <span class="hint">The coach does the improving; the target is who the prompt is for.</span>
+  </div>
+  <div class="runrow">
+    <button class="run" id="btnRun">Run the loop</button>
+    <button class="samplelink" id="btnSample">▶ Watch a sample run (no key needed)</button>
+  </div>
+  <div id="status"></div>
+</section>
+
+<!-- ============ LOOP ============ -->
+<div id="loopArea"></div>
+
+<section class="card" id="journey">
+  <div class="jrow">
+    <div>
+      <div class="jlabel">Score journey</div>
+      <svg id="sparkline" width="240" height="56" viewBox="0 0 240 56" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="jlabel" id="journeyNote"></div>
+  </div>
+</section>
+
+<!-- ============ RESULT ============ -->
+<section class="card" id="resultArea">
+  <div class="delta"><span class="big" id="deltaTxt"></span><span class="why" id="stopReason"></span></div>
+  <div class="tabs">
+    <button class="tab on" data-pane="paneFinal">Improved prompt</button>
+    <button class="tab" data-pane="paneDiff">What changed (diff)</button>
+    <button class="tab" data-pane="paneChanges">Why it changed</button>
+  </div>
+  <div class="pane on" id="paneFinal"><div class="final" id="finalPrompt"></div></div>
+  <div class="pane" id="paneDiff"><div class="diff" id="diffView"></div></div>
+  <div class="pane" id="paneChanges"><div id="changesList"></div></div>
+  <div class="resbtns">
+    <button class="copybtn" id="btnCopy">Copy improved prompt</button>
+    <button class="okbtn" id="btnAccept">✓ This is better</button>
+    <button class="nobtn" id="btnReject">✗ Not better</button>
+    <span class="votehint">Your verdict teaches this model's profile — the next run uses what it learned.</span>
+  </div>
+</section>
+
+<footer>PromptLoop · single-file, local-first · your API key and all learning stay in your browser</footer>
+</div>
+
+<!-- ============ KEY MODAL ============ -->
+<div class="modal-bg" id="keyModal">
+  <div class="modal">
+    <button class="mclose" data-close="keyModal">×</button>
+    <h3>Your OpenRouter API key</h3>
+    <div class="sub">
+      One free key unlocks every model (Claude, GPT, Gemini, DeepSeek, Llama, Mistral…).
+      Get one at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>.
+      It is stored <b>only in this browser</b> (localStorage) and sent <b>only to OpenRouter</b> — this file has no server.
+    </div>
+    <input type="password" id="keyIn" placeholder="sk-or-v1-..." spellcheck="false">
+    <div class="mrow">
+      <button class="copybtn" id="btnSaveKey">Save key</button>
+      <button class="ghost" id="btnClearKey">Remove key</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PROFILE INSPECTOR ============ -->
+<div class="modal-bg" id="profModal">
+  <div class="modal" style="max-width:760px">
+    <button class="mclose" data-close="profModal">×</button>
+    <h3>Model profiles — what PromptLoop believes, and what it learned from you</h3>
+    <div class="sub">
+      Seed values are honest heuristics (<span class="badge seed">seed</span>), not benchmarked facts.
+      Your 👍/👎 votes promote rules to <span class="badge learned">learned</span> (net +3 → medium confidence, +6 → high)
+      or disable them (net −3 → <span class="badge off">disabled</span>). Everything lives in your browser.
+    </div>
+    <select id="profSel" class="pselect" style="background:var(--bg2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font-size:13px"></select>
+    <div id="profBody"></div>
+    <div class="mrow">
+      <button class="copybtn" id="btnExport">Export this profile (JSON)</button>
+      <button class="ghost" id="btnResetLearn">Reset learning for this model</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   PromptLoop — single-file agentic prompt optimizer
+   Sections: seed profiles · learning overlay · OpenRouter client ·
+             scoring · stage prompts · loop engine · UI · sample replay
+   ===================================================================== */
+
+/* ------------------------- 1. SEED PROFILES ------------------------- */
+/* Heuristic starting points (confidence: low). The app's job is to let
+   YOUR feedback correct them — votes live in localStorage, per model.  */
+const SEED_PROFILES = [
+{
+  id:"anthropic/claude-sonnet-5", displayName:"Claude Sonnet 5", family:"Anthropic",
+  fields:{
+    instruction_style:"Plain declarative instructions; XML-style tags (<context>, <task>) help separate long inputs",
+    reasoning_trigger:"Adaptive reasoning is built in; explicit step-by-step helps only on multi-constraint tasks",
+    format_adherence:"High — follows named sections and schemas closely",
+    verbosity_bias:"Slightly verbose; cap lengths with numbers, not adjectives",
+    role_sensitivity:"Specific personas noticeably shift tone and depth",
+    context_placement:"Instructions first, long documents after; restate the ask after very long context"
+  },
+  house_rules:[
+    {id:"hr1",text:"Separate long inputs with simple tags like <context> and <task>"},
+    {id:"hr2",text:"State output length caps in numbers (e.g. 'max 5 bullets'), not adjectives"},
+    {id:"hr3",text:"Put hard constraints as a short bulleted list, not buried in prose"}
+  ],
+  failure_modes:["Adds hedges and caveats when constraints are vague","Over-explains simple answers unless told to be brief"]
+},
+{
+  id:"openai/gpt-5.5", displayName:"GPT-5.5", family:"OpenAI",
+  fields:{
+    instruction_style:"Terse imperative works well; markdown headers give useful structure",
+    reasoning_trigger:"Benefits from an explicit 'reason through this before answering' on multi-step tasks",
+    format_adherence:"High with an explicit template or schema; drifts on loose prose formats",
+    verbosity_bias:"Mirrors prompt length — short prompts get short answers",
+    role_sensitivity:"Moderate; a concrete role beats an elaborate persona",
+    context_placement:"Front-load the objective; recall of mid-context details degrades in long prompts"
+  },
+  house_rules:[
+    {id:"hr1",text:"Give an explicit output template or example of the desired shape"},
+    {id:"hr2",text:"Number multi-part requirements so none get merged"},
+    {id:"hr3",text:"Repeat the single most critical constraint at the end of the prompt"}
+  ],
+  failure_modes:["Invents its own structure when no format is specified","Compresses below requested detail on long outputs"]
+},
+{
+  id:"google/gemini-3.5-flash", displayName:"Gemini 3.5 Flash", family:"Google",
+  fields:{
+    instruction_style:"Clear headers and short paragraphs; avoid deeply nested instruction trees",
+    reasoning_trigger:"Fast model — an explicit reasoning request improves accuracy on logic-heavy tasks",
+    format_adherence:"Good on simple schemas; flatten complex nested JSON",
+    verbosity_bias:"Terse by default; ask for depth explicitly when you want it",
+    role_sensitivity:"Low to moderate; task clarity matters more than persona",
+    context_placement:"Handles long context well; put reference material before the question"
+  },
+  house_rules:[
+    {id:"hr1",text:"Mark every required section explicitly as required"},
+    {id:"hr2",text:"One question per prompt — split compound asks"},
+    {id:"hr3",text:"Prefer flat bullet constraints over nested rules"}
+  ],
+  failure_modes:["Skips optional sections when the ask is broad","Answers around a poorly bounded question"]
+},
+{
+  id:"deepseek/deepseek-v4-flash", displayName:"DeepSeek V4 Flash", family:"DeepSeek",
+  fields:{
+    instruction_style:"Direct and literal; keep instructions unambiguous",
+    reasoning_trigger:"Strong gains from explicit step-by-step on analytical tasks",
+    format_adherence:"Follows a concrete example better than an abstract schema",
+    verbosity_bias:"Can over-elaborate its reasoning; ask for the answer first, reasoning second",
+    role_sensitivity:"Moderate",
+    context_placement:"Keep prompts compact; trim context that is not needed for the task"
+  },
+  house_rules:[
+    {id:"hr1",text:"Show one example of the desired output"},
+    {id:"hr2",text:"State the tone explicitly (e.g. 'neutral business English')"},
+    {id:"hr3",text:"Avoid idioms and figures of speech in instructions"}
+  ],
+  failure_modes:["Reads ambiguous constraints literally","Occasional stilted phrasing unless tone is specified"]
+},
+{
+  id:"meta-llama/llama-4-maverick", displayName:"Llama 4 Maverick", family:"Meta (open weights)",
+  fields:{
+    instruction_style:"Simple, short instructions; long rule lists get partially dropped",
+    reasoning_trigger:"Explicit chain-of-thought helps on most non-trivial tasks",
+    format_adherence:"Medium — give an example record and expect to validate output",
+    verbosity_bias:"Chatty; forbid preamble explicitly",
+    role_sensitivity:"Persona helps tone more than accuracy",
+    context_placement:"Keep the total prompt short; the end of the prompt gets the most attention"
+  },
+  house_rules:[
+    {id:"hr1",text:"Cap the rules to the essential five"},
+    {id:"hr2",text:"Say 'no preamble — output only the X' when you want clean output"},
+    {id:"hr3",text:"Put the output format specification last"}
+  ],
+  failure_modes:["Adds a friendly preamble unless forbidden","Drops constraints when there are more than about seven"]
+},
+{
+  id:"mistralai/mistral-large-2512", displayName:"Mistral Large", family:"Mistral",
+  fields:{
+    instruction_style:"Concise imperative with clean sections",
+    reasoning_trigger:"Helps on multi-step analysis; skip for lookups and transforms",
+    format_adherence:"Good; keep schemas shallow",
+    verbosity_bias:"Fairly terse",
+    role_sensitivity:"Moderate",
+    context_placement:"Objective first; supporting material after"
+  },
+  house_rules:[
+    {id:"hr1",text:"Ask for complete sentences when you want prose, or it may answer in fragments"},
+    {id:"hr2",text:"List constraints one per line so none get merged"}
+  ],
+  failure_modes:["Over-compressed bullet-fragment answers","Occasionally merges two adjacent constraints into one"]
+}
+];
+const DEFAULT_COACH = "deepseek/deepseek-v4-flash";
+const INGREDIENTS = ["role","objective","context","constraints","output_format","reasoning_trigger"];
+const ING_LABEL = {role:"Role",objective:"Objective",context:"Context",constraints:"Constraints",output_format:"Output format",reasoning_trigger:"Reasoning trigger"};
+const WEIGHTS = {role:1,objective:1.25,context:1,constraints:1,output_format:1.25,reasoning_trigger:0.5};
+const ANTI_PATTERNS = ["vague_opening","buried_objective","missing_output_format","mixed_objectives","aggressive_stacking","vague_success_criteria"];
+
+/* ---------------------- 2. LEARNING OVERLAY ------------------------- */
+const LS = {key:"promptloop.key", overlay:m=>"promptloop.overlay."+m};
+
+function getOverlay(modelId){
+  try{ return JSON.parse(localStorage.getItem(LS.overlay(modelId))) || {votes:{},accepts:0,rejects:0}; }
+  catch(e){ return {votes:{},accepts:0,rejects:0}; }
+}
+function saveOverlay(modelId,ov){ localStorage.setItem(LS.overlay(modelId), JSON.stringify(ov)); }
+
+function vote(modelId, source, delta){
+  const ov = getOverlay(modelId);
+  ov.votes[source] = (ov.votes[source]||0) + delta;
+  saveOverlay(modelId,ov);
+  const n = ov.votes[source];
+  if(n === -3) toast("Learned: “"+sourceLabel(modelId,source)+"” disabled for "+shortName(modelId));
+  else if(n === 3) toast("Learned: “"+sourceLabel(modelId,source)+"” promoted to medium confidence");
+  else if(n === 6) toast("Learned: “"+sourceLabel(modelId,source)+"” promoted to HIGH confidence");
+  renderModelGrid();
+}
+function confidenceOf(net){ return net>=6?"high":net>=3?"medium":"low"; }
+function isDisabled(net){ return net<=-3; }
+
+/* Effective profile = seed + votes applied; disabled rules removed. */
+function effectiveProfile(modelId){
+  const seed = SEED_PROFILES.find(p=>p.id===modelId);
+  const ov = getOverlay(modelId);
+  if(!seed){
+    return {id:modelId, displayName:modelId, family:"custom", fields:{}, house_rules:[], failure_modes:[],
+            _custom:true, _overlay:ov};
+  }
+  const prof = JSON.parse(JSON.stringify(seed));
+  prof.house_rules = prof.house_rules
+    .map(r=>{
+      const net = ov.votes["rule:"+r.id]||0;
+      return {...r, net, confidence:confidenceOf(net), source:net>=3?"learned":"seed", disabled:isDisabled(net)};
+    })
+    .filter(r=>!r.disabled ? true : (r._keep=false, true)); // keep for inspector; engine filters below
+  prof.fieldMeta = {};
+  for(const f of Object.keys(prof.fields)){
+    const net = ov.votes["field:"+f]||0;
+    prof.fieldMeta[f] = {net, confidence:confidenceOf(net), source:net>=3?"learned":"seed", disabled:isDisabled(net)};
+  }
+  prof._overlay = ov;
+  return prof;
+}
+/* Serialization given to the coach model — only active knowledge. */
+function profileForPrompt(modelId){
+  const p = effectiveProfile(modelId);
+  if(p._custom) return "No behavior profile exists for "+modelId+" yet. Apply general prompt-engineering best practice only, and do not invent model-specific claims.";
+  const lines = ["Behavior profile for "+p.displayName+" ("+p.id+") — heuristics, refined by user feedback:"];
+  for(const f of Object.keys(p.fields)){
+    if(p.fieldMeta[f].disabled) continue;
+    lines.push("- "+f+" ["+p.fieldMeta[f].confidence+" confidence]: "+p.fields[f]);
+  }
+  const rules = p.house_rules.filter(r=>!r.disabled);
+  if(rules.length){ lines.push("House rules (id: text):"); rules.forEach(r=>lines.push("- "+r.id+" ["+r.confidence+"]: "+r.text)); }
+  if(p.failure_modes.length){ lines.push("Known failure modes to defend against:"); p.failure_modes.forEach(f=>lines.push("- "+f)); }
+  return lines.join("\n");
+}
+function shortName(id){ const p=SEED_PROFILES.find(x=>x.id===id); return p?p.displayName:id; }
+function sourceLabel(modelId, source){
+  const p = SEED_PROFILES.find(x=>x.id===modelId);
+  if(p && source.startsWith("rule:")){
+    const r = p.house_rules.find(r=>"rule:"+r.id===source);
+    if(r) return r.text.length>48 ? r.text.slice(0,45)+"…" : r.text;
+  }
+  return source.replace(/^((rule|field|ingredient):)/,"").replace(/_/g," ");
+}
+
+/* --------------------- 3. OPENROUTER CLIENT ------------------------ */
+async function callCoach(coachModel, system, user, useJsonMode){
+  const key = localStorage.getItem(LS.key);
+  if(!key) throw new Error("NO_KEY");
+  const body = {
+    model: coachModel,
+    messages: [{role:"system",content:system},{role:"user",content:user}],
+    temperature: 0.4
+  };
+  if(useJsonMode) body.response_format = {type:"json_object"};
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions",{
+    method:"POST",
+    headers:{
+      "Authorization":"Bearer "+key,
+      "Content-Type":"application/json",
+      "HTTP-Referer":"https://github.com/umairshoaiby/promptloop",
+      "X-Title":"PromptLoop"
+    },
+    body: JSON.stringify(body)
+  });
+  if(!res.ok){
+    /* Some models reject response_format — retry the call without it. */
+    if(useJsonMode && (res.status===400 || res.status===404)){
+      return callCoach(coachModel, system, user, false);
+    }
+    let msg = "OpenRouter error "+res.status;
+    try{ const j = await res.json(); if(j.error && j.error.message) msg += ": "+j.error.message; }catch(e){}
+    throw new Error(msg);
+  }
+  const data = await res.json();
+  const text = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : "";
+  return text;
+}
+function parseJSONLoose(text){
+  try{ return JSON.parse(text); }catch(e){}
+  const m = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if(m){ try{ return JSON.parse(m[1]); }catch(e){} }
+  const s = text.indexOf("{"), eIdx = text.lastIndexOf("}");
+  if(s>=0 && eIdx>s){ try{ return JSON.parse(text.slice(s,eIdx+1)); }catch(e){} }
+  return null;
+}
+/* One retry with a stricter reminder if the first response is not valid JSON. */
+async function coachJSON(coachModel, system, user){
+  let text = await callCoach(coachModel, system, user, true);
+  let obj = parseJSONLoose(text);
+  if(!obj){
+    text = await callCoach(coachModel, system + "\nReturn ONLY a valid JSON object. No prose, no code fences.", user, true);
+    obj = parseJSONLoose(text);
+  }
+  if(!obj) throw new Error("The coach model did not return valid JSON after a retry. Try a different coach model.");
+  return obj;
+}
+
+/* -------------------------- 4. SCORING ----------------------------- */
+/* The coach scores each ingredient 0–5; the TOTAL is computed here,
+   deterministically, so the model cannot fudge its own math.          */
+function computeTotal(scores, antiPatterns, complexity){
+  const map = {};
+  for(const s of (scores||[])) map[s.ingredient] = Math.max(0,Math.min(5, Number(s.score)||0));
+  if(complexity==="simple") map.reasoning_trigger = 5;      // optional ingredient on simple tasks
+  let sum=0, max=0;
+  for(const ing of INGREDIENTS){ sum += (map[ing]||0)*WEIGHTS[ing]; max += 5*WEIGHTS[ing]; }
+  let total = Math.round(sum/max*100);
+  const flags = (antiPatterns||[]).filter(a=>a.present);
+  total -= flags.length*4;
+  return Math.max(0,Math.min(100,total));
+}
+
+/* ----------------------- 5. STAGE PROMPTS -------------------------- */
+const RUBRIC_SPEC = `Score the prompt on six ingredients, each 0-5:
+- role: does it assign a concrete, specific persona?
+- objective: is there ONE precise, load-bearing ask with a concrete output verb?
+- context: does the model get the situation, inputs and audience it needs?
+- constraints: is it explicit about what the output must and must not contain?
+- output_format: is the exact shape of the output specified?
+- reasoning_trigger: for complex tasks, is deliberate reasoning invited? (irrelevant for simple tasks)
+Also flag these anti-patterns (present true/false):
+vague_opening, buried_objective, missing_output_format, mixed_objectives, aggressive_stacking, vague_success_criteria.
+Score harshly. Quote evidence from the prompt (or note the absence).`;
+
+function analyzerPrompt(original){
+  return {
+    system:`You are a strict prompt-quality analyst. ${RUBRIC_SPEC}
+Return ONLY JSON:
+{"task_shape":"extraction|classification|summarization|review|drafting|comparison|planning|tutoring|debugging|other",
+ "complexity":"simple|moderate|complex",
+ "scores":[{"ingredient":"role","score":0,"evidence":"...","suggestion":"..."} , ... all six],
+ "anti_patterns":[{"pattern":"vague_opening","present":true,"span":"..."} , ... all six],
+ "summary":"one plain-English sentence on the biggest weakness"}`,
+    user:"Prompt to analyze:\n\n"+original
+  };
+}
+function rewriterPrompt(original, analysis, targetId){
+  return {
+    system:`You are an expert prompt engineer. Rewrite the user's prompt so it performs best on the target model, using the behavior profile below. Preserve the user's intent, domain vocabulary and voice — do not add requirements they never asked for. Fix the weaknesses found in the analysis. Every change must be justified by a rubric ingredient or a profile house rule.
+${profileForPrompt(targetId)}
+Return ONLY JSON:
+{"rewritten_prompt":"...",
+ "changes":[{"summary":"what changed, short","reason":"why, plain English","source":"ingredient:objective | ingredient:output_format | rule:hr1 | field:verbosity_bias ..."}]}`,
+    user:"Original prompt:\n\n"+original+"\n\nAnalysis of its weaknesses:\n"+JSON.stringify(analysis)
+  };
+}
+function criticPrompt(current, targetId){
+  return {
+    system:`You are an adversarial prompt critic. Assume the target model will misread this prompt wherever possible — find how. ${RUBRIC_SPEC}
+Target model context:
+${profileForPrompt(targetId)}
+Return ONLY JSON:
+{"complexity":"simple|moderate|complex",
+ "scores":[... all six as before],
+ "anti_patterns":[... all six],
+ "issues":[{"issue":"specific way the target model could misread or underperform","fix_hint":"..."}],
+ "summary":"one sentence: the biggest remaining weakness, or 'solid' if none"}`,
+    user:"Prompt to critique:\n\n"+current
+  };
+}
+function reviserPrompt(current, critique, targetId){
+  return {
+    system:`You are an expert prompt engineer revising a prompt. Apply the critic's issues below with the smallest edits that fix them. Preserve intent, vocabulary and everything already working. Every change must trace to a critic issue, rubric ingredient, or profile house rule.
+${profileForPrompt(targetId)}
+Return ONLY JSON:
+{"rewritten_prompt":"...",
+ "changes":[{"summary":"...","reason":"...","source":"ingredient:... | rule:... | field:..."}]}`,
+    user:"Current prompt:\n\n"+current+"\n\nCritique to address:\n"+JSON.stringify(critique)
+  };
+}
+
+/* ------------------------ 6. LOOP ENGINE --------------------------- */
+const state = {
+  running:false, target:null, coach:DEFAULT_COACH, maxRounds:4,
+  original:"", best:{prompt:"",score:0}, baseline:0,
+  totals:[], changes:[], stopReason:"", sample:false
+};
+
+async function runLoop(sample){
+  if(state.running) return;
+  const original = $("promptIn").value.trim();
+  const target = sample ? "anthropic/claude-sonnet-5" : selectedModel();
+  if(!sample){
+    if(!original){ return showStatus("Paste a prompt first — or try an example chip.", true); }
+    if(!target){ return showStatus("Pick a target model (or type a custom model id).", true); }
+    if(!localStorage.getItem(LS.key)){ openModal("keyModal"); return showStatus("Add your free OpenRouter key first — it stays in your browser.", true); }
+  }
+  state.running = true; state.sample = !!sample;
+  state.target = target; state.coach = $("coachSel").value || DEFAULT_COACH;
+  state.maxRounds = parseInt($("roundsSel").value,10);
+  state.original = sample ? SAMPLE.original : original;
+  state.totals = []; state.changes = []; state.best = {prompt:state.original, score:0};
+  state.stopReason = "";
+  $("btnRun").disabled = true; showStatus("");
+  $("loopArea").style.display = "block"; $("loopArea").innerHTML = "";
+  $("journey").style.display = "none"; $("resultArea").style.display = "none";
+  $("loopArea").scrollIntoView({behavior:"smooth",block:"nearest"});
+
+  try{
+    if(sample) await runSample(); else await runReal();
+    finishLoop();
+  }catch(err){
+    if(String(err.message)==="NO_KEY"){ openModal("keyModal"); showStatus("Add your OpenRouter key to run the loop.", true); }
+    else showStatus("The loop stopped: "+err.message, true);
+    if(state.totals.length>1) finishLoop();   // show partial result if we got anywhere
+  }finally{
+    state.running=false; $("btnRun").disabled=false;
+  }
+}
+
+async function runReal(){
+  /* Round 0 — analyze the original */
+  let card = iterCard(0, "Baseline", ["Analyze"]);
+  card.setStage(0,"active");
+  const ap = analyzerPrompt(state.original);
+  const analysis = await coachJSON(state.coach, ap.system, ap.user);
+  const s0 = computeTotal(analysis.scores, analysis.anti_patterns, analysis.complexity);
+  state.baseline = s0; state.totals.push(s0);
+  card.setStage(0,"done"); card.showScores(analysis, s0);
+  card.note((analysis.summary||"")); card.flags(analysis.anti_patterns);
+
+  /* Round 1 — rewrite for the target */
+  let current = state.original;
+  card = iterCard(1, "Round 1", ["Rewrite","Critique"]);
+  card.setStage(0,"active");
+  const rp = rewriterPrompt(current, analysis, state.target);
+  const rew = await coachJSON(state.coach, rp.system, rp.user);
+  if(!rew.rewritten_prompt) throw new Error("The coach returned no rewritten prompt.");
+  current = rew.rewritten_prompt;
+  state.changes.push(...normChanges(rew.changes));
+  card.setStage(0,"done"); card.showPrompt(current);
+  card.setStage(1,"active");
+  let cq = await coachJSON(state.coach, criticPrompt(current,state.target).system, criticPrompt(current,state.target).user);
+  let score = computeTotal(cq.scores, cq.anti_patterns, cq.complexity);
+  state.totals.push(score);
+  card.setStage(1,"done"); card.showScores(cq, score); card.note(cq.summary||"");
+  if(score > state.best.score){ state.best = {prompt:current, score}; }
+
+  /* Rounds 2..N — revise ⇄ critique until converged */
+  for(let round=2; round<=state.maxRounds; round++){
+    const prev = state.totals[state.totals.length-1];
+    const prevPrev = state.totals[state.totals.length-2];
+    if(prev>=90){ state.stopReason="Hit the quality bar ("+prev+"/100)."; return; }
+    if(state.totals.length>=3 && (prev - prevPrev) < 3){ state.stopReason="Score plateaued — further rounds were not adding value."; return; }
+
+    card = iterCard(round, "Round "+round, ["Revise","Critique"]);
+    card.setStage(0,"active");
+    const rv = reviserPrompt(current, cq, state.target);
+    const revd = await coachJSON(state.coach, rv.system, rv.user);
+    if(revd.rewritten_prompt){ current = revd.rewritten_prompt; state.changes.push(...normChanges(revd.changes)); }
+    card.setStage(0,"done"); card.showPrompt(current);
+    card.setStage(1,"active");
+    const cp = criticPrompt(current,state.target);
+    cq = await coachJSON(state.coach, cp.system, cp.user);
+    score = computeTotal(cq.scores, cq.anti_patterns, cq.complexity);
+    state.totals.push(score);
+    card.setStage(1,"done"); card.showScores(cq, score); card.note(cq.summary||"");
+    if(score > state.best.score){ state.best = {prompt:current, score}; }
+  }
+  state.stopReason = "Reached the round limit ("+state.maxRounds+").";
+}
+
+function normChanges(arr){
+  return (arr||[]).filter(c=>c && c.summary).map(c=>({
+    summary:String(c.summary), reason:String(c.reason||""), source:String(c.source||"ingredient:objective")
+  }));
+}
+
+function finishLoop(){
+  const finalScore = state.best.score, base = state.baseline;
+  $("journey").style.display="block";
+  drawSpark(state.totals);
+  $("journeyNote").textContent = state.totals.length + " scoring passes · coach: " + shortName(state.coach) + " · target: " + shortName(state.target);
+  $("resultArea").style.display="block";
+  $("deltaTxt").textContent = "Your prompt: " + base + " → " + finalScore;
+  $("stopReason").textContent = state.stopReason || "";
+  $("finalPrompt").textContent = state.best.prompt;
+  $("diffView").innerHTML = wordDiff(state.original, state.best.prompt);
+  renderChanges();
+  $("resultArea").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+/* -------------------------- 7. WORD DIFF --------------------------- */
+/* Simple LCS word diff — enough for prompt-sized texts. */
+function wordDiff(a,b){
+  const A=a.split(/(\s+)/), B=b.split(/(\s+)/);
+  const n=A.length, m=B.length;
+  if(n*m > 4_000_000){ // very long: fallback, no diff
+    return "<del>"+esc(a)+"</del>\n\n<ins>"+esc(b)+"</ins>";
+  }
+  const dp = new Int32Array((n+1)*(m+1));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--){
+    dp[i*(m+1)+j] = A[i]===B[j] ? dp[(i+1)*(m+1)+j+1]+1 : Math.max(dp[(i+1)*(m+1)+j], dp[i*(m+1)+j+1]);
+  }
+  let i=0,j=0,out=[],delBuf=[],insBuf=[];
+  const flush=()=>{ if(delBuf.length){out.push("<del>"+esc(delBuf.join(""))+"</del>");delBuf=[];}
+                    if(insBuf.length){out.push("<ins>"+esc(insBuf.join(""))+"</ins>");insBuf=[];} };
+  while(i<n&&j<m){
+    if(A[i]===B[j]){ flush(); out.push(esc(A[i])); i++; j++; }
+    else if(dp[(i+1)*(m+1)+j] >= dp[i*(m+1)+j+1]){ delBuf.push(A[i++]); }
+    else{ insBuf.push(B[j++]); }
+  }
+  while(i<n) delBuf.push(A[i++]);
+  while(j<m) insBuf.push(B[j++]);
+  flush();
+  return out.join("");
+}
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+/* ----------------------------- 8. UI ------------------------------- */
+function $(id){ return document.getElementById(id); }
+function toast(msg){
+  const t=$("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"), 3200);
+}
+function showStatus(msg, isErr){
+  const s=$("status"); s.textContent=msg; s.className = isErr?"err":""; s.style.display = msg?"block":"none";
+  if(!isErr && !msg) s.style.display="none";
+}
+function openModal(id){ $(id).classList.add("open"); }
+function closeModal(id){ $(id).classList.remove("open"); }
+
+/* model grid */
+let currentModel = SEED_PROFILES[0].id;
+function selectedModel(){
+  const custom = $("customModel").value.trim();
+  return custom || currentModel;
+}
+function renderModelGrid(){
+  const g=$("modelGrid"); g.innerHTML="";
+  for(const p of SEED_PROFILES){
+    const ov=getOverlay(p.id);
+    const learned=Object.values(ov.votes||{}).filter(v=>v>=3||v<=-3).length;
+    const b=document.createElement("button");
+    b.className="model"+(p.id===currentModel && !$("customModel").value.trim() ? " sel":"");
+    b.innerHTML = "<b>"+p.displayName+"</b><span>"+p.id+"</span>" +
+      (learned? "<span class='learn'>"+learned+" learned</span>" : "");
+    b.onclick=()=>{ currentModel=p.id; $("customModel").value=""; renderModelGrid(); };
+    g.appendChild(b);
+  }
+}
+
+/* iteration cards */
+let iterCount=0;
+function iterCard(round, title, stages){
+  const el=document.createElement("div"); el.className="iter";
+  const chipHtml = stages.map((s,idx)=>`<span class="stage" data-i="${idx}"><span class="spin"></span>${s}</span>`).join("");
+  el.innerHTML = `<div class="iterhead"><span class="itertitle">${title}</span>
+    <span class="stagechips">${chipHtml}</span>
+    <span class="itertotal"><span class="tv">–</span><small>/100</small></span></div>
+    <div class="scores"></div><ul class="notes"></ul><div class="promptbox"></div>`;
+  $("loopArea").appendChild(el);
+  el.scrollIntoView({behavior:"smooth",block:"nearest"});
+  const api = {
+    setStage(i,cls){ const c=el.querySelectorAll(".stage")[i]; if(c){c.classList.remove("active","done");c.classList.add(cls);} },
+    showScores(result, total){
+      const sc=el.querySelector(".scores"); sc.innerHTML="";
+      const map={}; (result.scores||[]).forEach(s=>map[s.ingredient]=s);
+      for(const ing of INGREDIENTS){
+        const s=map[ing]||{score:0};
+        let val = Math.max(0,Math.min(5,Number(s.score)||0));
+        if(result.complexity==="simple" && ing==="reasoning_trigger") val=5;
+        const row=document.createElement("div"); row.className="srow";
+        row.title = (s.evidence||"") + (s.suggestion? " → "+s.suggestion : "");
+        row.innerHTML=`<span class="lab">${ING_LABEL[ing]}</span><span class="bar"><i></i></span><span class="val">${val}/5</span>`;
+        sc.appendChild(row);
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{ row.querySelector("i").style.width=(val/5*100)+"%"; }));
+      }
+      const tv=el.querySelector(".tv");
+      animateNumber(tv, total);
+    },
+    note(txt){ if(!txt) return; const li=document.createElement("li"); li.textContent=txt; el.querySelector(".notes").appendChild(li); },
+    flags(aps){
+      (aps||[]).filter(a=>a.present).forEach(a=>{
+        const li=document.createElement("li"); li.className="flag";
+        li.textContent="Anti-pattern: "+a.pattern.replace(/_/g," ")+(a.span? " — “"+a.span+"”":"");
+        el.querySelector(".notes").appendChild(li);
+      });
+    },
+    showPrompt(text){
+      const box=el.querySelector(".promptbox");
+      box.innerHTML = `<details class="iterdetails"><summary>View prompt after this round</summary><div class="iterprompt"></div></details>`;
+      box.querySelector(".iterprompt").textContent=text;
+    }
+  };
+  return api;
+}
+function animateNumber(elm, target){
+  const start = parseInt(elm.textContent)||0, t0=performance.now(), dur=700;
+  function tick(t){
+    const k=Math.min(1,(t-t0)/dur);
+    elm.textContent = Math.round(start+(target-start)*(1-Math.pow(1-k,3)));
+    if(k<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+function drawSpark(totals){
+  const svg=$("sparkline"); svg.innerHTML="";
+  if(totals.length<2){ svg.innerHTML=""; }
+  const W=240,H=56,pad=6;
+  const xs=i=>pad+i*(W-2*pad)/Math.max(1,totals.length-1);
+  const ys=v=>H-pad-(v/100)*(H-2*pad);
+  let d="M "+xs(0)+" "+ys(totals[0]);
+  for(let i=1;i<totals.length;i++) d+=" L "+xs(i)+" "+ys(totals[i]);
+  svg.innerHTML=`<defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+    <path d="${d}" fill="none" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round"/>` +
+    totals.map((v,i)=>`<circle cx="${xs(i)}" cy="${ys(v)}" r="3.4" fill="#0b0f17" stroke="url(#g)" stroke-width="2"/>
+      <text x="${xs(i)}" y="${ys(v)-8}" fill="#8fa1b6" font-size="9" text-anchor="middle" font-family="monospace">${v}</text>`).join("");
+}
+
+/* changes + feedback */
+function renderChanges(){
+  const list=$("changesList"); list.innerHTML="";
+  if(!state.changes.length){ list.innerHTML="<div class='hint'>No individual changes were reported.</div>"; return; }
+  state.changes.forEach((c,idx)=>{
+    const div=document.createElement("div"); div.className="change";
+    div.innerHTML=`<div class="cbody"><b>${esc(c.summary)}</b><div class="creason">${esc(c.reason)}</div>
+      <span class="csrc" title="What motivated this change">${esc(c.source)}</span></div>
+      <div class="thumbs">
+        <button class="thumb up" title="This change helped">👍</button>
+        <button class="thumb down" title="This change hurt">👎</button>
+      </div>`;
+    const up=div.querySelector(".up"), down=div.querySelector(".down");
+    up.onclick=()=>{ if(up.classList.contains("picked"))return;
+      vote(state.target, c.source, +1); up.classList.add("picked"); down.classList.remove("picked"); };
+    down.onclick=()=>{ if(down.classList.contains("picked"))return;
+      vote(state.target, c.source, -1); down.classList.add("picked"); up.classList.remove("picked"); };
+    list.appendChild(div);
+  });
+}
+
+/* profile inspector */
+function renderInspector(){
+  const sel=$("profSel");
+  if(!sel.options.length){
+    SEED_PROFILES.forEach(p=>{ const o=document.createElement("option"); o.value=p.id; o.textContent=p.displayName+"  ·  "+p.id; sel.appendChild(o); });
+    sel.onchange=renderInspector;
+  }
+  const id=sel.value||SEED_PROFILES[0].id;
+  const p=effectiveProfile(id), ov=p._overlay;
+  let html = `<table class="ptable"><tr><th>Behavior field</th><th>Current belief</th><th>Status</th></tr>`;
+  for(const f of Object.keys(p.fields)){
+    const m=p.fieldMeta[f];
+    html+=`<tr><td style="white-space:nowrap">${f.replace(/_/g," ")}</td><td>${esc(p.fields[f])}</td>
+      <td>${m.disabled?'<span class="badge off">disabled</span>':
+        `<span class="badge ${m.source==="learned"?"learned":"seed"}">${m.source} · ${m.confidence}</span>`}
+      ${m.net? `<div class="hint">net votes: ${m.net>0?"+":""}${m.net}</div>`:""}</td></tr>`;
+  }
+  html+=`</table><table class="ptable"><tr><th>House rule</th><th>Status</th></tr>`;
+  for(const r of p.house_rules){
+    html+=`<tr><td>${esc(r.text)}</td>
+      <td>${r.disabled?'<span class="badge off">disabled</span>':
+        `<span class="badge ${r.source==="learned"?"learned":"seed"}">${r.source} · ${r.confidence}</span>`}
+      ${r.net? `<div class="hint">net votes: ${r.net>0?"+":""}${r.net}</div>`:""}</td></tr>`;
+  }
+  html+=`</table><div class="hint" style="margin-top:10px">Runs judged: ${ov.accepts||0} better · ${ov.rejects||0} not better</div>`;
+  $("profBody").innerHTML=html;
+}
+
+/* ------------------------- 9. SAMPLE REPLAY ------------------------ */
+/* A canned run so anyone can see the loop working before adding a key.
+   Clearly labeled; uses the same UI pipeline with realistic data.     */
+const SAMPLE = {
+  original:"help me write something for my boss about the project status",
+  analysis:{ task_shape:"drafting", complexity:"moderate",
+    summary:"Almost every ingredient is missing — the model would have to guess the format, audience and content.",
+    scores:[
+      {ingredient:"role",score:0,evidence:"No role assigned"},
+      {ingredient:"objective",score:1,evidence:"“write something” — no concrete output verb or deliverable"},
+      {ingredient:"context",score:1,evidence:"Which project? What happened? The model must invent everything"},
+      {ingredient:"constraints",score:0,evidence:"No length, tone or content bounds"},
+      {ingredient:"output_format",score:0,evidence:"Email? Bullets? A paragraph? Unspecified"},
+      {ingredient:"reasoning_trigger",score:2,evidence:"Not needed yet, but nothing orients the model"}],
+    anti_patterns:[
+      {pattern:"vague_opening",present:true,span:"help me write something"},
+      {pattern:"missing_output_format",present:true},
+      {pattern:"vague_success_criteria",present:true},
+      {pattern:"buried_objective",present:false},{pattern:"mixed_objectives",present:false},{pattern:"aggressive_stacking",present:false}]},
+  rewrite:{
+    rewritten_prompt:
+`You are an experienced program manager writing to a senior manager.
+
+Draft a concise project status email.
+
+<context>
+Project: [project name]
+This period: [2-3 things that happened]
+Risks or blockers: [list, or "none"]
+Next milestone: [what and when]
+</context>
+
+Requirements:
+- Max 120 words, neutral professional tone
+- Structure: one-line summary, then 3 bullets (progress, risks, next step)
+- Lead with the overall status: On track / At risk / Blocked
+- No filler phrases, no apologies
+
+Output only the email body, starting with the status line.`,
+    changes:[
+      {summary:"Assigned a program-manager role writing to a senior manager",reason:"An unassigned model defaults to a generic assistant voice",source:"ingredient:role"},
+      {summary:"Replaced “write something” with “draft a concise project status email”",reason:"One concrete deliverable with a real output verb",source:"ingredient:objective"},
+      {summary:"Added a fill-in context block with simple tags",reason:"The model needs the facts; tags keep them separate from instructions",source:"rule:hr1"},
+      {summary:"Set a 120-word cap and a 3-bullet structure",reason:"Numeric caps beat adjectives like “brief”",source:"rule:hr2"},
+      {summary:"Specified the exact output shape and banned filler",reason:"Unspecified format is the top cause of unusable output",source:"ingredient:output_format"}]},
+  critique1:{ complexity:"moderate", summary:"Strong, but the status vocabulary and bullet labels could still drift.",
+    scores:[
+      {ingredient:"role",score:5,evidence:"Concrete role and audience"},
+      {ingredient:"objective",score:5,evidence:"Single clear deliverable"},
+      {ingredient:"context",score:4,evidence:"Fill-in block provided; audience seniority could be tighter"},
+      {ingredient:"constraints",score:4,evidence:"Length, tone, banned content all present"},
+      {ingredient:"output_format",score:4,evidence:"Shape given; bullet labels not pinned"},
+      {ingredient:"reasoning_trigger",score:4,evidence:"Not needed for this task"}],
+    anti_patterns:ANTI_PATTERNS.map(p=>({pattern:p,present:false})),
+    issues:[{issue:"“3 bullets (progress, risks, next step)” could be reordered or relabeled by the model",fix_hint:"Name the three bullet labels explicitly"}]},
+  revise:{
+    changes:[{summary:"Pinned the three bullet labels: Progress / Risks / Next",reason:"Removes the last formatting ambiguity the critic found",source:"ingredient:output_format"}]},
+  critique2:{ complexity:"moderate", summary:"Solid — every ingredient present, nothing left for the target model to guess.",
+    scores:[
+      {ingredient:"role",score:5,evidence:"Concrete"},{ingredient:"objective",score:5,evidence:"Single deliverable"},
+      {ingredient:"context",score:4,evidence:"Fill-in block"},{ingredient:"constraints",score:5,evidence:"Complete"},
+      {ingredient:"output_format",score:5,evidence:"Fully pinned"},{ingredient:"reasoning_trigger",score:4,evidence:"Appropriate"}],
+    anti_patterns:ANTI_PATTERNS.map(p=>({pattern:p,present:false})), issues:[]}
+};
+SAMPLE.revise.rewritten_prompt = SAMPLE.rewrite.rewritten_prompt.replace(
+  "Structure: one-line summary, then 3 bullets (progress, risks, next step)",
+  "Structure: one-line summary, then exactly 3 bullets labeled Progress, Risks, Next");
+
+const wait = ms=>new Promise(r=>setTimeout(r,ms));
+async function runSample(){
+  $("promptIn").value = SAMPLE.original;
+  toast("Sample replay — canned data, no API calls. Add a key to run your own prompts.");
+  let card = iterCard(0,"Baseline · sample replay",["Analyze"]);
+  card.setStage(0,"active"); await wait(1400);
+  const s0 = computeTotal(SAMPLE.analysis.scores, SAMPLE.analysis.anti_patterns, SAMPLE.analysis.complexity);
+  state.baseline=s0; state.totals.push(s0);
+  card.setStage(0,"done"); card.showScores(SAMPLE.analysis,s0); card.note(SAMPLE.analysis.summary); card.flags(SAMPLE.analysis.anti_patterns);
+  await wait(1100);
+
+  card = iterCard(1,"Round 1 · sample replay",["Rewrite","Critique"]);
+  card.setStage(0,"active"); await wait(1600);
+  state.changes.push(...normChanges(SAMPLE.rewrite.changes));
+  card.setStage(0,"done"); card.showPrompt(SAMPLE.rewrite.rewritten_prompt);
+  card.setStage(1,"active"); await wait(1500);
+  let s1 = computeTotal(SAMPLE.critique1.scores, SAMPLE.critique1.anti_patterns, SAMPLE.critique1.complexity);
+  state.totals.push(s1);
+  card.setStage(1,"done"); card.showScores(SAMPLE.critique1,s1); card.note(SAMPLE.critique1.summary);
+  state.best={prompt:SAMPLE.rewrite.rewritten_prompt,score:s1};
+  await wait(1100);
+
+  card = iterCard(2,"Round 2 · sample replay",["Revise","Critique"]);
+  card.setStage(0,"active"); await wait(1300);
+  state.changes.push(...normChanges(SAMPLE.revise.changes));
+  card.setStage(0,"done"); card.showPrompt(SAMPLE.revise.rewritten_prompt);
+  card.setStage(1,"active"); await wait(1400);
+  const s2 = computeTotal(SAMPLE.critique2.scores, SAMPLE.critique2.anti_patterns, SAMPLE.critique2.complexity);
+  state.totals.push(s2);
+  card.setStage(1,"done"); card.showScores(SAMPLE.critique2,s2); card.note(SAMPLE.critique2.summary);
+  state.best={prompt:SAMPLE.revise.rewritten_prompt,score:s2};
+  state.stopReason="Hit the quality bar ("+s2+"/100). (Sample replay)";
+}
+
+/* --------------------------- 10. WIRING ---------------------------- */
+document.addEventListener("DOMContentLoaded", ()=>{
+  renderModelGrid();
+  /* coach select */
+  const cs=$("coachSel");
+  SEED_PROFILES.forEach(p=>{ const o=document.createElement("option"); o.value=p.id; o.textContent=p.displayName; if(p.id===DEFAULT_COACH)o.selected=true; cs.appendChild(o); });
+
+  $("customModel").addEventListener("input", renderModelGrid);
+  document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ $("promptIn").value=c.dataset.ex; $("promptIn").focus(); });
+
+  $("btnRun").onclick=()=>runLoop(false);
+  $("btnSample").onclick=()=>runLoop(true);
+
+  /* tabs */
+  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+    document.querySelectorAll(".pane").forEach(x=>x.classList.remove("on"));
+    t.classList.add("on"); $(t.dataset.pane).classList.add("on");
+  });
+
+  /* result buttons */
+  $("btnCopy").onclick=async()=>{ await navigator.clipboard.writeText(state.best.prompt||""); toast("Improved prompt copied."); };
+  $("btnAccept").onclick=()=>{
+    const ov=getOverlay(state.target); ov.accepts=(ov.accepts||0)+1; saveOverlay(state.target,ov);
+    const seen=new Set();
+    state.changes.forEach(c=>{ if(!seen.has(c.source)){ seen.add(c.source); vote(state.target,c.source,+1);} });
+    toast("Thanks — this run's rules got upvoted for "+shortName(state.target)+".");
+  };
+  $("btnReject").onclick=()=>{
+    const ov=getOverlay(state.target); ov.rejects=(ov.rejects||0)+1; saveOverlay(state.target,ov);
+    const seen=new Set();
+    state.changes.forEach(c=>{ if(!seen.has(c.source)){ seen.add(c.source); vote(state.target,c.source,-1);} });
+    toast("Noted — this run's rules got downvoted. Rules at net −3 stop being applied.");
+  };
+
+  /* key modal */
+  const refreshKeyDot=()=>{ $("keyDot").className = localStorage.getItem(LS.key) ? "dot-ok":"dot-no"; };
+  refreshKeyDot();
+  $("btnKey").onclick=()=>{ $("keyIn").value=localStorage.getItem(LS.key)||""; openModal("keyModal"); };
+  $("btnSaveKey").onclick=()=>{
+    const v=$("keyIn").value.trim();
+    if(!v) return toast("Paste a key first.");
+    localStorage.setItem(LS.key,v); refreshKeyDot(); closeModal("keyModal"); toast("Key saved in this browser only.");
+  };
+  $("btnClearKey").onclick=()=>{ localStorage.removeItem(LS.key); $("keyIn").value=""; refreshKeyDot(); toast("Key removed."); };
+
+  /* profiles modal */
+  $("btnProfiles").onclick=()=>{ renderInspector(); openModal("profModal"); };
+  $("btnExport").onclick=()=>{
+    const id=$("profSel").value;
+    const blob=new Blob([JSON.stringify(effectiveProfile(id),null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="promptloop-profile-"+id.replace(/\//g,"--")+".json"; a.click();
+    toast("Profile exported — open a PR to share what your usage taught it.");
+  };
+  $("btnResetLearn").onclick=()=>{
+    const id=$("profSel").value;
+    localStorage.removeItem(LS.overlay(id)); renderInspector(); renderModelGrid();
+    toast("Learning reset for "+shortName(id)+".");
+  };
+
+  document.querySelectorAll(".mclose").forEach(b=>b.onclick=()=>closeModal(b.dataset.close));
+  document.querySelectorAll(".modal-bg").forEach(m=>m.addEventListener("click",e=>{ if(e.target===m) m.classList.remove("open"); }));
+});
+</script>
+</body>
+</html>
